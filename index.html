@@ -304,20 +304,49 @@
 
 <!-- Modals -->
 <div id="auth-modal" class="modal-overlay hidden"><div class="modal"><h2 id="auth-title">ログイン</h2><input type="text" id="auth-id" class="auth-input" placeholder="ID (英数字)"><input type="password" id="auth-pass" class="auth-input" placeholder="Password (6文字以上)"><div id="auth-error" style="color:#ff6b6b;font-size:0.85rem;"></div><button id="auth-btn" class="btn-primary" onclick="app.auth.submit()">ログイン</button><div id="auth-toggle" class="toggle-link" onclick="app.auth.toggleMode()">新規登録はこちら</div></div></div>
-<div id="join-create-modal" class="modal-overlay hidden"><div class="modal"><h2>Wiki追加</h2><div><h3 style="margin:0 0 5px 0;font-size:1rem;">参加</h3><div style="display:flex;gap:8px;"><input type="text" id="join-id-input" class="auth-input" style="flex:1" placeholder="wiki-id..."><button class="btn-primary" style="width:auto;" onclick="app.joinWiki()">参加</button></div></div><div><h3 style="margin:0 0 5px 0;font-size:1rem;">作成</h3><div style="display:flex;gap:8px;"><input type="text" id="create-id-input" class="auth-input" style="flex:1" placeholder="my-team"><button class="btn-primary" style="width:auto;" onclick="app.createWiki()">作成</button></div></div><button class="btn-cancel" onclick="document.getElementById('join-create-modal').classList.add('hidden')">閉じる</button></div></div>
 
-<!-- Wiki Info Modal (Expanded) -->
+<!-- Wiki Join/Create Modal with Password -->
+<div id="join-create-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <h2>Wiki追加</h2>
+        
+        <div style="border-bottom:1px solid var(--border-color); padding-bottom:20px; margin-bottom:15px;">
+            <h3 style="margin:0 0 8px 0;font-size:1rem;">参加する</h3>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="join-id-input" class="auth-input" placeholder="Wiki ID...">
+                <input type="password" id="join-pass-input" class="auth-input" placeholder="参加パスワード (既存はPrePass)">
+                <button class="btn-primary" onclick="app.joinWiki()">参加</button>
+            </div>
+        </div>
+
+        <div>
+            <h3 style="margin:0 0 8px 0;font-size:1rem;">新規作成</h3>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+                <input type="text" id="create-id-input" class="auth-input" placeholder="希望Wiki ID (英数字)">
+                <input type="password" id="create-pass-input" class="auth-input" placeholder="参加パスワードを設定">
+                <button class="btn-primary" onclick="app.createWiki()">作成</button>
+            </div>
+        </div>
+        
+        <button class="btn-cancel" style="margin-top:15px;" onclick="document.getElementById('join-create-modal').classList.add('hidden')">閉じる</button>
+    </div>
+</div>
+
+<!-- Wiki Info Modal with Password Edit -->
 <div id="wiki-info-modal" class="modal-overlay hidden">
     <div class="modal">
-        <h2>Wiki情報</h2>
+        <h2>Wiki情報・設定</h2>
         
         <label style="font-size:0.8rem;font-weight:bold;">ID (共有用)</label>
-        <div style="display:flex;gap:5px;margin-bottom:15px;">
+        <div style="display:flex;gap:5px;margin-bottom:10px;">
             <input type="text" id="info-wiki-id" class="auth-input" readonly style="background:var(--bg-color);">
             <button class="btn-primary" style="width:auto;" onclick="app.copyWikiId()">Copy</button>
         </div>
 
-        <label style="font-size:0.8rem;font-weight:bold;">創始者 (表示名)</label>
+        <label style="font-size:0.8rem;font-weight:bold;">参加パスワード変更</label>
+        <input type="password" id="info-pass-input" class="auth-input" placeholder="新しいパスワード (空欄で変更なし)">
+
+        <label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">創始者 (表示名)</label>
         <input type="text" id="info-owner-display" class="auth-input" placeholder="表示名">
 
         <label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">説明・ルール</label>
@@ -576,28 +605,50 @@ class App {
             document.getElementById('info-desc').value=da.description||'';
             document.getElementById('info-notes').value=da.notes||'';
             document.getElementById('info-owner-display').value=da.ownerName||'';
+            document.getElementById('info-pass-input').value=''; // clear pass field
         });
     }
     saveWikiInfo(){
-        db.collection('wikis').doc(this.currentWikiId).set({
+        const pass = document.getElementById('info-pass-input').value.trim();
+        const data = {
             description:document.getElementById('info-desc').value,
             notes:document.getElementById('info-notes').value,
             ownerName:document.getElementById('info-owner-display').value
-        },{merge:true}).then(()=>document.getElementById('wiki-info-modal').classList.add('hidden'));
+        };
+        if(pass) data.password = pass; // Update password only if provided
+        
+        db.collection('wikis').doc(this.currentWikiId).set(data,{merge:true}).then(()=>{
+            alert('設定を保存しました');
+            document.getElementById('wiki-info-modal').classList.add('hidden');
+        });
     }
     copyWikiId(){ navigator.clipboard.writeText(this.currentWikiId).then(()=>alert('Copied')); }
     async createWiki(){
         const id=document.getElementById('create-id-input').value.trim();
+        const pass=document.getElementById('create-pass-input').value.trim();
         if(!id.match(/^[a-zA-Z0-9_-]+$/)) return alert('英数字のみ');
+        if(!pass) return alert('パスワードを設定してください');
+        
         let tid=id, ex=true, s=0;
         while(ex){ const d=await db.collection('wikis').doc(tid).get(); if(d.exists){s=Math.floor(Math.random()*9000)+1000; tid=`${id}-${s}`;}else{ex=false;}}
-        const b=db.batch(); b.set(db.collection('wikis').doc(tid),{owner:this.uid,createdAt:Date.now()});
+        const b=db.batch(); 
+        b.set(db.collection('wikis').doc(tid),{owner:this.uid, password:pass, createdAt:Date.now()});
         b.set(db.collection('users').doc(this.uid).collection('joinedWikis').doc(tid),{name:tid,role:'owner',joinedAt:Date.now()});
         await b.commit(); document.getElementById('join-create-modal').classList.add('hidden');
     }
     async joinWiki(){
-        const id=document.getElementById('join-id-input').value.trim(); if(!id)return;
-        const d=await db.collection('wikis').doc(id).get(); if(!d.exists) return alert('なし');
+        const id=document.getElementById('join-id-input').value.trim(); 
+        const pass=document.getElementById('join-pass-input').value.trim();
+        if(!id || !pass) return alert('IDとパスワードを入力してください');
+        
+        const d=await db.collection('wikis').doc(id).get(); 
+        if(!d.exists) return alert('なし');
+        
+        const data = d.data();
+        const correctPass = data.password || 'PrePass'; // Default to PrePass if none
+        
+        if(pass !== correctPass) return alert('パスワードが違います');
+        
         await db.collection('users').doc(this.uid).collection('joinedWikis').doc(id).set({name:id,role:'member',joinedAt:Date.now()});
         document.getElementById('join-create-modal').classList.add('hidden');
     }
