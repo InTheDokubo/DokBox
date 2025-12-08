@@ -144,11 +144,11 @@
         /* Headers */
         .column-header, .detail-header { height: var(--header-height); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; gap: 10px; }
         .header-title-area { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 8px; border-radius: 8px; flex-shrink: 0; }
+        .menu-btn:hover { background: var(--input-bg); }
         .header-title { font-weight: 800; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
         .wiki-edit-btn { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--text-sub); border-radius: 4px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
         .wiki-edit-btn:hover { background: var(--input-bg); color: var(--accent-color); }
-        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 5px; border-radius: 50%; flex-shrink: 0; }
-        .menu-btn:hover { background: var(--input-bg); }
         
         /* List View Items */
         .search-area { padding: 15px 20px; background: var(--bg-color); flex-shrink: 0; width: 100%; display: flex; justify-content: center; }
@@ -453,7 +453,7 @@ class App {
         document.getElementById('search-input').addEventListener('input', e=>this.renderList(e.target.value));
         document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) document.getElementById('settings-popover').classList.add('hidden'); });
         
-        // Color Picker Fix: Use input event for real-time update
+        // Color Picker Fix
         const cp = document.getElementById('accent-color-picker');
         cp.addEventListener('input', (e)=>this.setAccentColor(e.target.value));
         cp.addEventListener('change', ()=>this.saveSettings());
