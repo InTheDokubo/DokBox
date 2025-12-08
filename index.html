@@ -119,7 +119,7 @@
         /* --- APP CONTAINER --- */
         #app-container {
             display: grid; width: 100vw; height: 100%;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr; /* Single column layout */
             grid-template-rows: 100%;
             opacity: 0; display: none;
         }
@@ -182,7 +182,10 @@
         .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2); }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-sub); pointer-events: none; }
         
-        #list-scroll { flex-grow: 1; overflow-y: auto; padding: 0 20px 40px 20px; -webkit-overflow-scrolling: touch; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        #list-scroll { 
+            flex-grow: 1; overflow-y: auto; padding: 20px 20px 40px 20px; /* Top padding added for hover fix */
+            -webkit-overflow-scrolling: touch; width: 100%; display: flex; flex-direction: column; align-items: center; 
+        }
         .card-grid { display: grid; gap: 10px; grid-template-columns: repeat(6, 1fr); width: 100%; max-width: 1200px; }
         .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; overflow: hidden; transition: all 0.2s; border: 2px solid transparent; position: relative; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-color); }
@@ -369,10 +372,12 @@ class Auth {
                 document.getElementById('login-screen').classList.add('fade-out');
                 setTimeout(() => {
                     document.getElementById('app-container').classList.add('visible');
-                    document.getElementById('app-container').style.display = 'grid'; 
+                    // Reset grid layout
+                    document.getElementById('app-container').style.display = 'grid';
                 }, 500);
                 this.app.init(user.uid, user.email.split('@')[0]); 
             } else { 
+                // Reset to login screen
                 document.getElementById('login-screen').classList.remove('fade-out');
                 document.getElementById('app-container').classList.remove('visible');
                 document.getElementById('app-container').style.display = 'none';
@@ -386,6 +391,7 @@ class Auth {
         document.getElementById('auth-toggle').innerText = this.isRegister?"既存IDでのログインはこちら":"新規登録はこちら";
     }
     submit() {
+        // Show loading
         document.getElementById('loading-overlay').classList.remove('hidden');
         document.getElementById('loading-overlay').classList.add('visible');
         
@@ -404,6 +410,7 @@ class Auth {
          .catch(e => {
              document.getElementById('loading-overlay').classList.remove('visible');
              document.getElementById('loading-overlay').classList.add('hidden');
+             // Improve error messages
              let msg = e.message;
              if(e.code === 'auth/email-already-in-use') msg = 'このIDは既に使用されています';
              if(e.code === 'auth/user-not-found') msg = 'IDが見つかりません';
@@ -413,9 +420,11 @@ class Auth {
     }
     logout() { 
         auth.signOut().then(()=>{
+            // Manually reset state instead of reload to avoid flicker
             document.getElementById('app-container').classList.remove('visible');
             document.getElementById('login-screen').classList.remove('fade-out');
             document.getElementById('auth-pass').value = '';
+            // Reset Layout
             app.navigateHome();
             document.getElementById('sidebar').classList.remove('open');
             document.getElementById('sidebar-backdrop').classList.remove('open');
@@ -491,6 +500,7 @@ class App {
         document.getElementById('search-input').addEventListener('input', e=>this.renderList(e.target.value));
         document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) document.getElementById('settings-popover').classList.add('hidden'); });
         
+        // Color Picker Fix
         const cp = document.getElementById('accent-color-picker');
         cp.addEventListener('input', (e)=>this.setAccentColor(e.target.value));
         cp.addEventListener('change', ()=>this.saveSettings());
@@ -513,7 +523,7 @@ class App {
                 if(c===0)f=id; c++;
             });
             if(c>0 && !this.currentWikiId) this.switchWiki(f); 
-            else if(c===0) this.showJoinCreateModal(true); 
+            else if(c===0) this.showJoinCreateModal(true); // Force Modal if no wikis
         });
     }
 
@@ -533,7 +543,7 @@ class App {
 
     toggleSidebar(show) {
         const sb=document.getElementById('sidebar'), bd=document.getElementById('sidebar-backdrop');
-        if(show === undefined) show = !sb.classList.contains('open'); 
+        if(show === undefined) show = !sb.classList.contains('open'); // Toggle
         if(show){ sb.classList.add('open'); bd.classList.add('open'); } else { sb.classList.remove('open'); bd.classList.remove('open'); }
     }
     navigateHome() { this.currentPageId=null; document.body.setAttribute('data-view','list'); document.querySelectorAll('.card').forEach(c=>c.classList.remove('active')); }
@@ -575,6 +585,7 @@ class App {
                 const titleMatch = (p.title||"").toLowerCase().includes(lowQ);
                 const fullText = p.lines.join('\n').toLowerCase();
                 const bodyMatch = fullText.includes(lowQ);
+                // Tag Match
                 const tagMatch = !lowQ.startsWith('#') && fullText.includes('#' + lowQ);
                 return titleMatch || bodyMatch || tagMatch;
             });
@@ -604,6 +615,7 @@ class App {
             if(links.includes(pt)) return true;
             if(pb.includes(`[${t.toLowerCase()}]`)) return true;
             if(links.some(l=>pb.includes(`[${l}]`))) return true;
+            // Tag Match
             for(let tag of tags) { if(pb.includes(`#${tag}`)) return true; }
             return false;
         });
@@ -621,7 +633,7 @@ class App {
     
     toggleSettings(){ document.getElementById('settings-popover').classList.toggle('hidden'); }
     applySettings(){
-        document.documentElement.setAttribute('data-theme',this.settings.theme); 
+        document.documentElement.setAttribute('data-theme',this.settings.theme); // Apply to HTML tag for CSS var inheritance
         document.documentElement.style.setProperty('--accent-color',this.settings.accentColor);
         document.getElementById('accent-color-picker').value=this.settings.accentColor;
     }
