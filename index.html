@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DokBox Teams</title>
     
-    <!-- Favicon: Box with 'D' -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 20 L56 20 L50 56 L14 56 Z' fill='%235865F2'/><path d='M8 20 L2 8 L62 8 L56 20 Z' fill='%23404EED'/><text x='32' y='50' font-family='sans-serif' font-weight='bold' font-size='28' fill='white' text-anchor='middle'>D</text></svg>">
+    <!-- Favicon: Black Box with 'D' -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 20 L56 20 L50 56 L14 56 Z' fill='%23333'/><text x='32' y='50' font-family='sans-serif' font-weight='bold' font-size='28' fill='white' text-anchor='middle'>D</text></svg>">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
@@ -16,211 +16,256 @@
     <style>
         :root {
             /* Colors */
-            --sb-bg: #202225; --sb-item: #2f3136; --sb-active: #40444b; --sb-text: #dcddde;
-            --bg-color: #f4f5f7; --card-bg: #ffffff; --text-main: #333333; --text-sub: #666666;
-            --border-color: #e0e0e0; --input-bg: #fafafa; --input-focus-bg: #ffffff;
-            --accent-color: #5865F2; --link-color: #00aff4; --danger-color: #ff6b6b;
+            --sb-bg: #f0f0f0; --sb-item: #e0e0e0; --sb-active: #333; --sb-text: #333; /* Sidebar Light */
+            --bg-color: #ffffff; --card-bg: #f9f9f9; --text-main: #333333; --text-sub: #666666;
+            --border-color: #ddd; --input-bg: #fff; --input-focus-bg: #fff;
+            --accent-color: #333; /* Black Accent */
+            --link-color: #0066cc; --danger-color: #ff4444;
             
             /* Dimensions */
             --sidebar-width: 72px;
             --header-height: 60px;
         }
         [data-theme="dark"] {
+            --sb-bg: #202225; --sb-item: #2f3136; --sb-active: #40444b; --sb-text: #dcddde;
             --bg-color: #36393f; --card-bg: #2f3136; --text-main: #dcddde; --text-sub: #b9bbbe;
             --border-color: #202225; --input-bg: #40444b; --input-focus-bg: #202225;
+            --accent-color: #5865F2; /* Keep blue for dark mode visibility */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: "M PLUS Rounded 1c", sans-serif; background: var(--bg-color); color: var(--text-main); transition: background 0.3s, color 0.3s; }
+        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: "M PLUS Rounded 1c", sans-serif; background: var(--bg-color); color: var(--text-main); }
 
-        /* --- Layout Grid --- */
-        #app-container {
-            display: grid; width: 100vw; height: 100%;
-            grid-template-columns: 1fr;
-            grid-template-rows: 100%;
+        /* --- LOGIN SCREEN (ENTRANCE) --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #ffffff; z-index: 9999; /* Light Background */
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.8s ease, visibility 0.8s;
+            overflow: hidden;
+        }
+        #login-screen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .entrance-wrapper {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; height: 100%;
         }
 
-        /* --- Sidebar (Hidden Drawer) --- */
-        #sidebar {
-            position: fixed; top: 0; left: 0; height: 100%; width: var(--sidebar-width);
-            background: var(--sb-bg); display: flex; flex-direction: column; align-items: center; 
-            padding-top: 15px; gap: 12px; overflow-y: auto; z-index: 5000;
-            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        /* 3D Box (Black Lines) */
+        .scene {
+            width: 80px; height: 80px;
+            perspective: 800px;
+            margin-bottom: 20px;
         }
-        #sidebar.open { transform: translateX(0); }
+        .cage {
+            width: 100%; height: 100%; position: relative;
+            transform-style: preserve-3d;
+            transform: rotateX(-20deg) rotateY(45deg);
+            /* Infinite spin for 3D effect */
+            animation: cageSpin 12s infinite linear;
+        }
         
-        .wiki-icon { 
-            width: 48px; height: 48px; border-radius: 50%; background: var(--sb-item); color: var(--sb-text); 
-            display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; 
-            transition: all 0.2s; font-size: 0.8rem; overflow: hidden; user-select: none; flex-shrink: 0; position: relative; 
+        .face {
+            position: absolute; width: 80px; height: 80px;
+            border: 3px solid #333; /* Black Border */
+            background: #fff;
+            opacity: 1;
         }
-        .wiki-icon:hover, .wiki-icon.active { border-radius: 16px; background: var(--accent-color); color: white; }
-        .wiki-icon.active::before { content: ''; position: absolute; left: -4px; width: 4px; height: 20px; background: white; border-radius: 0 4px 4px 0; }
-        .wiki-icon.add-btn { color: #43b581; background: transparent; border: 1px dashed #43b581; }
-        .wiki-icon.add-btn:hover { background: #43b581; color: white; border-style: solid; }
-        .separator { width: 32px; height: 2px; background: var(--sb-item); margin: 4px 0; flex-shrink: 0; }
-        .sidebar-footer { margin-top: auto; padding-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .app-logo { font-size: 0.6rem; color: var(--sb-text); opacity: 0.5; font-weight: 900; letter-spacing: 2px; transform: rotate(-90deg); white-space: nowrap; margin-bottom: 15px; pointer-events: none; }
-
-        /* Sidebar Backdrop */
-        #sidebar-backdrop {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 4900; opacity: 0; transition: opacity 0.3s;
-            backdrop-filter: blur(2px);
-        }
-        #sidebar-backdrop.open { display: block; opacity: 1; }
-
-        /* --- Main Content --- */
-        #main-content { 
-            position: relative; overflow: hidden; display: flex; flex-direction: column; 
-            background: var(--bg-color); width: 100%;
-        }
-
-        /* View Containers */
-        #list-column, #detail-column {
+        .front  { transform: translateZ(40px); }
+        .back   { transform: rotateY(180deg) translateZ(40px); }
+        .right  { transform: rotateY(90deg) translateZ(40px); }
+        .left   { transform: rotateY(-90deg) translateZ(40px); }
+        .bottom { transform: rotateX(-90deg) translateZ(40px); background: #eee; }
+        
+        /* Flap 1 (Left side) attached to Left Face Top Edge */
+        .lid-left-container {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            background: var(--bg-color);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s;
+            transform: rotateY(-90deg) translateZ(40px);
+            pointer-events: none; transform-style: preserve-3d;
+        }
+        .lid-real-L {
+            position: absolute; top: -40px; left: 0; width: 80px; height: 40px;
+            transform-origin: bottom;
+            border: 3px solid #333; background: #fff;
+            transform: rotateX(90deg); /* Closed initially */
+            animation: openLid 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.5s;
         }
 
-        /* View State Logic */
+        /* Flap 2 (Right side) attached to Right Face Top Edge */
+        .lid-right-container {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            transform: rotateY(90deg) translateZ(40px);
+            pointer-events: none; transform-style: preserve-3d;
+        }
+        .lid-real-R {
+            position: absolute; top: -40px; left: 0; width: 80px; height: 40px;
+            transform-origin: bottom;
+            border: 3px solid #333; background: #fff;
+            transform: rotateX(90deg); /* Closed initially */
+            animation: openLid 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards 0.5s;
+        }
+
+        @keyframes openLid {
+            0% { transform: rotateX(90deg); }
+            100% { transform: rotateX(220deg); } /* Open upwards/outwards */
+        }
+        
+        @keyframes cageSpin {
+            0% { transform: rotateX(-15deg) rotateY(0deg); }
+            100% { transform: rotateX(-15deg) rotateY(360deg); }
+        }
+
+        /* Logo appearing from box */
+        .entrance-logo {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0) translateY(20px);
+            font-family: 'Arial Black', sans-serif; font-size: 3rem; font-weight: 900;
+            color: #333; text-transform: uppercase; letter-spacing: 2px;
+            animation: logoRise 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 1s;
+            z-index: 50; white-space: nowrap;
+        }
+        @keyframes logoRise {
+            0% { transform: translate(-50%, -50%) scale(0) translateY(50px); opacity: 0; }
+            100% { transform: translate(-50%, -160%) scale(1) translateY(0); opacity: 1; }
+        }
+
+        /* Login Form */
+        .login-form-wrap {
+            opacity: 0; animation: fadeIn 1s forwards 2s;
+            width: 90%; max-width: 280px; display: flex; flex-direction: column; gap: 15px; z-index: 200;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .l-input-group { position: relative; }
+        .l-input {
+            width: 100%; padding: 12px 12px 12px 36px; background: #f9f9f9;
+            border: 2px solid #333; border-radius: 0; color: #333; font-size: 1rem; font-weight: bold;
+            outline: none; transition: 0.3s;
+        }
+        .l-input:focus { background: #fff; border-color: #000; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); }
+        .l-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #333; }
+        
+        .l-btn {
+            width: 100%; padding: 12px; background: #333; color: white; font-weight: bold;
+            border: none; border-radius: 0; cursor: pointer; font-size: 0.9rem; text-transform: uppercase;
+            transition: 0.2s;
+        }
+        .l-btn:hover { background: #000; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .l-toggle {
+            text-align: center; color: #666; font-size: 0.8rem; cursor: pointer; text-decoration: underline;
+        }
+        .l-toggle:hover { color: #000; }
+        .l-error { color: #ff4444; font-size: 0.8rem; text-align: center; margin-bottom: 5px; min-height: 1.2em; font-weight: bold; }
+
+
+        /* --- APP (Hidden Initially) --- */
+        #app-container { opacity: 0; transition: opacity 0.5s; display: none; }
+        #app-container.visible { opacity: 1; }
+
+        /* (App Styles Refined for Light Theme Default) */
+        #sidebar { background: var(--sb-bg); border-right: 1px solid rgba(0,0,0,0.1); }
+        .wiki-icon { background: var(--sb-item); color: var(--sb-text); }
+        .wiki-icon:hover, .wiki-icon.active { border-radius: 12px; background: #333; color: white; }
+        .wiki-icon.add-btn { color: #333; border: 2px dashed #ccc; }
+        .wiki-icon.add-btn:hover { background: #333; color: white; border-style: solid; }
+        .app-logo-sb { color: #ccc; font-weight: 900; }
+        
+        /* Layout */
+        #app-layout { display: grid; width: 100vw; height: 100%; grid-template-columns: var(--sidebar-width) 1fr; grid-template-rows: 100%; }
+        #main-content { position: relative; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-color); }
+        #list-column, #detail-column { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: var(--bg-color); transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s; }
         body[data-view="list"] #list-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
         body[data-view="list"] #detail-column { transform: translateX(30%); opacity: 0; z-index: 0; pointer-events: none; }
         body[data-view="detail"] #list-column { transform: translateX(-30%); opacity: 0; z-index: 0; pointer-events: none; }
         body[data-view="detail"] #detail-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
-
-        /* --- List View --- */
-        .column-header {
-            height: var(--header-height); padding: 0 15px; display: flex; align-items: center; justify-content: space-between;
-            background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; gap: 10px;
-        }
-        .header-title-area { display: flex; align-items: center; gap: 10px; overflow: hidden; }
-        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 5px; border-radius: 50%; flex-shrink: 0; }
-        .menu-btn:hover { background: var(--input-bg); }
-        .header-title { font-weight: 800; font-size: 1.1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
         
-        .wiki-edit-btn {
-            display: flex; align-items: center; justify-content: center; width: 28px; height: 28px;
-            color: var(--text-sub); border-radius: 4px; cursor: pointer; transition: background 0.2s; flex-shrink: 0;
-        }
-        .wiki-edit-btn:hover { background: var(--input-bg); color: var(--accent-color); }
-
-        .search-area { padding: 10px 15px; background: var(--bg-color); flex-shrink: 0; max-width: 800px; margin: 0 auto; width: 100%; }
+        .column-header { height: var(--header-height); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; gap: 15px; }
+        .header-title { font-weight: 800; font-size: 1.2rem; cursor: pointer; color: #333; }
+        .search-area { padding: 15px 20px; background: var(--bg-color); flex-shrink: 0; max-width: 800px; margin: 0 auto; width: 100%; }
         .search-input { width: 100%; padding: 10px 15px 10px 35px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2); }
+        .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-sub); pointer-events: none; }
-
-        #list-scroll { flex-grow: 1; overflow-y: auto; padding: 0 10px 40px 10px; -webkit-overflow-scrolling: touch; }
         
-        /* GRID LAYOUT */
-        .card-grid { 
-            display: grid; gap: 8px; 
-            grid-template-columns: repeat(6, 1fr); /* PC Default */
-            max-width: 1400px; margin: 0 auto; width: 100%;
-        }
-        @media (max-width: 768px) {
-            .card-grid { grid-template-columns: repeat(2, 1fr); } /* Mobile */
-        }
-        
-        .card { 
-            background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
-            cursor: pointer; aspect-ratio: 1 / 1; 
-            display: flex; flex-direction: column; overflow: hidden; transition: all 0.2s; 
-            border: 2px solid transparent; position: relative;
-        }
+        #list-scroll { flex-grow: 1; overflow-y: auto; padding: 0 20px 40px 20px; -webkit-overflow-scrolling: touch; }
+        .card-grid { display: grid; gap: 10px; grid-template-columns: repeat(6, 1fr); max-width: 1400px; margin: 0 auto; width: 100%; }
+        @media (max-width: 768px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; overflow: hidden; transition: all 0.2s; border: 2px solid transparent; position: relative; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-color); }
         .card.active { border-color: var(--accent-color); background: var(--input-bg); }
         .card-thumb { height: 50%; width: 100%; background-size: cover; background-position: center; background-color: var(--input-bg); flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
         .card-content { padding: 8px; display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; text-align: center; justify-content: center;}
         .card-title { font-weight: bold; font-size: 0.8rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
         .card-meta { font-size: 0.6rem; color: var(--text-sub); opacity: 0.7; }
-
-        /* --- Detail View --- */
-        .detail-header {
-            height: var(--header-height); padding: 0 15px; display: flex; align-items: center; justify-content: space-between;
-            background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; z-index: 100;
-        }
-        .detail-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-        .back-btn { display: flex; align-items: center; gap: 5px; color: var(--accent-color); font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: background 0.2s; }
-        .back-btn:hover { background: var(--input-bg); }
-
+        
+        .detail-header { height: var(--header-height); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; z-index: 100; }
+        .detail-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
         .editor-scroll { flex-grow: 1; overflow-y: auto; padding: 0; -webkit-overflow-scrolling: touch; }
         .editor-wrapper { max-width: 900px; margin: 0 auto; min-height: 100%; background: var(--card-bg); padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
         input.title-input { width: 100%; font-size: 2rem; font-weight: 800; border: none; outline: none; background: transparent; color: var(--text-main); margin-bottom: 20px; padding: 0; line-height: 1.3; }
-        
-        /* Hybrid Editor Lines */
-        #hybrid-editor {
-            display: flex; flex-direction: column; gap: 8px; font-size: 1.1rem; line-height: 1.8; color: var(--text-main); font-family: monospace; outline: none; padding-bottom: 150px;
-        }
-        .line-block {
-            min-height: 1.8em; outline: none; white-space: pre-wrap; word-break: break-all; border-radius: 4px; padding: 2px 6px;
-        }
+        #hybrid-editor { display: flex; flex-direction: column; gap: 8px; font-size: 1.1rem; line-height: 1.8; color: var(--text-main); font-family: monospace; outline: none; padding-bottom: 150px; }
+        .line-block { min-height: 1.8em; outline: none; white-space: pre-wrap; word-break: break-all; border-radius: 4px; padding: 2px 6px; }
         .line-block:not(.editing) { cursor: text; }
         .line-block.editing { background: var(--input-bg); box-shadow: 0 0 0 2px var(--border-color); color: var(--text-main); }
-        
         .r-bold { font-weight: 800; color: var(--text-main); background: rgba(0,0,0,0.05); padding: 0 4px; border-radius: 4px;}
-        .r-tag { color: var(--accent-color); font-weight: bold; margin-right: 4px; background: rgba(88, 101, 242, 0.1); padding: 0 6px; border-radius: 4px; display: inline-block; cursor: pointer; }
+        .r-tag { color: var(--accent-color); font-weight: bold; margin-right: 4px; background: rgba(0,0,0,0.05); padding: 0 6px; border-radius: 4px; display: inline-block; cursor: pointer; }
         .r-link { color: var(--link-color); text-decoration: underline; cursor: pointer; font-weight: bold; }
-        .r-link.is-empty { color: var(--danger-color); }
         .r-img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; margin: 10px 0; cursor: pointer; border: 2px solid transparent; transition: border 0.2s;}
         .r-img:hover { border-color: var(--accent-color); }
-
         #related-section { margin-top: 60px; padding-top: 20px; border-top: 2px solid var(--border-color); opacity: 0.8; }
         #related-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
-
-        /* --- Theme Toggle Animation (Sun/Moon) --- */
-        .theme-toggle-wrap {
-            position: relative; width: 24px; height: 24px; cursor: pointer; overflow: hidden;
-        }
-        .theme-icon {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.3s;
-            stroke: var(--accent-color); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
-        }
-        /* Light Mode: Sun visible */
-        .icon-moon { transform: rotate(90deg) scale(0.5); opacity: 0; }
-        .icon-sun { transform: rotate(0) scale(1); opacity: 1; }
         
-        /* Dark Mode: Moon visible */
-        [data-theme="dark"] .icon-sun { transform: rotate(-90deg) scale(0.5); opacity: 0; }
-        [data-theme="dark"] .icon-moon { transform: rotate(0) scale(1); opacity: 1; }
-
-        /* --- Components --- */
-        .hidden { display: none !important; }
-        .controls-area { display: flex; align-items: center; gap: 10px; }
-        .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--accent-color); color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.2s; }
-        .btn-circle:hover { transform: scale(1.1); }
+        .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: none; background: #333; color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.2s; }
+        .btn-circle:hover { transform: scale(1.1); background: #000; }
         .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-sub); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .btn-icon:hover { background: var(--input-bg); color: var(--text-main); }
-        .btn-icon.danger { color: #ff6b6b; }
-        .btn-icon.danger:hover { background: #ffeeee; }
-
-        /* Popovers & Modals */
-        .settings-popover { position: absolute; top: 65px; right: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; width: 260px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 4000; display: flex; flex-direction: column; gap: 15px; }
-        .settings-popover h3 { margin: 0; font-size: 0.95rem; color: var(--text-sub); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal { background: var(--card-bg); width: 90%; max-width: 400px; padding: 30px; border-radius: 16px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
-        .auth-input, .wiki-desc-input { padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; width: 100%; outline: none; }
-        .auth-input:focus { border-color: var(--accent-color); }
-        .btn-primary { padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        .btn-primary.danger { background: var(--danger-color); }
-        .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
-        input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
-        #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
-        .toggle-link { text-align: center; font-size: 0.85rem; color: var(--accent-color); cursor: pointer; text-decoration: underline; margin-top: 5px; }
+        .back-btn { display: flex; align-items: center; gap: 5px; color: #333; font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: background 0.2s; }
         
-        .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .settings-popover { position: absolute; top: 65px; right: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; width: 260px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 4000; display: flex; flex-direction: column; gap: 15px; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal { background: var(--card-bg); width: 90%; max-width: 400px; padding: 30px; border-radius: 0; border: 2px solid #333; display: flex; flex-direction: column; gap: 15px; box-shadow: 10px 10px 0 rgba(0,0,0,0.1); }
+        .auth-input-in-modal { padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; width: 100%; outline: none; }
+        
+        @media (max-width: 768px) {
+            #app-layout { display: block; position: relative; }
+            #sidebar { position: fixed; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 4px 0 15px rgba(0,0,0,0.3); }
+            #sidebar.open { transform: translateX(0); }
+            .mobile-menu-btn { display: flex !important; margin-right: 10px;}
+            .back-btn { display: flex !important; }
+            .editor-wrapper { padding: 20px; }
+            input.title-input { font-size: 1.8rem; margin-bottom: 20px; }
+        }
+        @media (min-width: 769px) { .mobile-menu-btn { display: none; } .back-btn { display: flex; } }
     </style>
 </head>
 <body data-view="list">
 
-<!-- Backdrop for Sidebar -->
-<div id="sidebar-backdrop" onclick="app.toggleSidebar(false)"></div>
+<!-- LOGIN / ENTRANCE SCREEN -->
+<div id="login-screen">
+    <div class="entrance-wrapper">
+        <div class="scene">
+            <div class="cage">
+                <div class="face front"></div><div class="face back"></div><div class="face right"></div><div class="face left"></div><div class="face bottom"></div>
+                <!-- Double Flaps attached to Left/Right faces top edge -->
+                <div class="lid-left-container"><div class="lid-real-L"></div></div>
+                <div class="lid-right-container"><div class="lid-real-R"></div></div>
+            </div>
+        </div>
+        
+        <div class="entrance-logo">DokBox</div>
 
+        <div class="login-form-wrap">
+            <div class="l-input-group"><input type="text" id="auth-id" class="l-input" placeholder="User ID"><span class="l-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></span></div>
+            <div class="l-input-group"><input type="password" id="auth-pass" class="l-input" placeholder="Password"><span class="l-icon"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span></div>
+            <div id="auth-error" class="l-error"></div>
+            <button id="auth-btn" class="l-btn" onclick="app.auth.submit()">LOGIN</button>
+            <div id="auth-toggle" class="l-toggle" onclick="app.auth.toggleMode()">新規登録はこちら</div>
+        </div>
+    </div>
+</div>
+
+<!-- APP UI -->
+<div id="sidebar-backdrop" onclick="app.toggleSidebar(false)"></div>
 <div id="app-container">
-    <!-- 1. SIDEBAR -->
     <aside id="sidebar">
         <div class="separator"></div>
         <div class="wiki-icon add-btn" onclick="app.showJoinCreateModal()" title="Wikiを追加">+</div>
@@ -228,31 +273,26 @@
             <div class="wiki-icon" style="background:none; color:var(--sb-text);" onclick="app.auth.logout()" title="ログアウト">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
             </div>
-            <div class="app-logo">DokBox</div>
+            <div class="app-logo-sb">DokBox</div>
         </div>
     </aside>
 
-    <!-- 2. LIST VIEW (Full Screen) -->
     <section id="list-column">
         <div class="column-header">
             <div class="header-title-area">
-                <div class="menu-btn" onclick="app.toggleSidebar(true)">
+                <div class="menu-btn mobile-menu-btn" onclick="app.toggleSidebar(true)">
                     <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </div>
                 <div class="header-title" id="header-wiki-title">DokBox Teams</div>
-                
-                <!-- Edit Wiki Info (Pencil) -->
                 <div class="wiki-edit-btn" onclick="app.showWikiInfoModal()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                 </div>
             </div>
-            
             <div class="controls-area">
                 <div class="theme-toggle-wrap" onclick="app.toggleTheme()">
                     <svg class="theme-icon icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
                     <svg class="theme-icon icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
                 </div>
-
                 <button class="btn-icon" onclick="app.toggleSettings()">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
@@ -264,121 +304,24 @@
                 <button class="btn-circle" onclick="app.createNewPage()">+</button>
             </div>
         </div>
-        
-        <div class="search-area">
-            <div style="position:relative; max-width:800px; margin:0 auto;">
-                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input type="text" id="search-input" class="search-input" placeholder="ページを検索...">
-            </div>
-        </div>
-
-        <div id="list-scroll">
-            <div id="card-grid" class="card-grid"></div>
-            <div id="empty-msg" class="hidden" style="text-align:center; margin-top:100px; color:var(--text-sub); opacity:0.6;">
-                <p>ページがありません</p>
-            </div>
-        </div>
+        <div class="search-area"><div style="position:relative;max-width:800px;margin:0 auto;"><svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg><input type="text" id="search-input" class="search-input" placeholder="ページを検索..."></div></div>
+        <div id="list-scroll"><div id="card-grid" class="card-grid"></div><div id="empty-msg" class="hidden" style="text-align:center;margin-top:100px;color:var(--text-sub);opacity:0.6;"><p>ページがありません</p></div></div>
     </section>
 
-    <!-- 3. DETAIL VIEW -->
     <section id="detail-column">
         <div class="detail-header">
-            <div class="back-btn" onclick="app.navigateHome()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                <span>戻る</span>
-            </div>
-            
-            <div class="detail-actions">
-                <span id="save-status" style="font-size:0.75rem; color:var(--text-sub);"></span>
-                <button class="btn-icon danger" onclick="app.confirmDeletePage()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </div>
+            <div class="back-btn" onclick="app.navigateHome()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>戻る</span></div>
+            <div class="detail-actions"><span id="save-status" style="font-size:0.75rem;color:var(--text-sub);"></span><button class="btn-icon danger" onclick="app.confirmDeletePage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>
         </div>
-
-        <div class="editor-scroll">
-            <div class="editor-wrapper">
-                <input type="text" id="page-title" class="title-input" placeholder="タイトルなし">
-                <div id="hybrid-editor"></div>
-                <div id="related-section" class="hidden" style="margin-top:60px; border-top:2px solid var(--border-color); padding-top:20px;">
-                    <div style="font-weight:bold; color:var(--text-sub); margin-bottom:15px; font-size:0.9rem;">関連ページ</div>
-                    <div id="related-grid" class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));"></div>
-                </div>
-            </div>
-        </div>
+        <div class="editor-scroll"><div class="editor-wrapper"><input type="text" id="page-title" class="title-input" placeholder="タイトルなし"><div id="hybrid-editor"></div><div id="related-section" class="hidden" style="margin-top:60px;border-top:2px solid var(--border-color);padding-top:20px;"><div style="font-weight:bold;color:var(--text-sub);margin-bottom:15px;font-size:0.9rem;">関連ページ</div><div id="related-grid" class="card-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));"></div></div></div></div>
     </section>
 </div>
 
-<!-- Modals -->
-<div id="auth-modal" class="modal-overlay hidden"><div class="modal"><h2 id="auth-title">ログイン</h2><input type="text" id="auth-id" class="auth-input" placeholder="ID (英数字)"><input type="password" id="auth-pass" class="auth-input" placeholder="Password (6文字以上)"><div id="auth-error" style="color:#ff6b6b;font-size:0.85rem;"></div><button id="auth-btn" class="btn-primary" onclick="app.auth.submit()">ログイン</button><div id="auth-toggle" class="toggle-link" onclick="app.auth.toggleMode()">新規登録はこちら</div></div></div>
-
-<!-- Wiki Join/Create Modal with Password -->
-<div id="join-create-modal" class="modal-overlay hidden">
-    <div class="modal">
-        <h2>Wiki追加</h2>
-        
-        <div style="border-bottom:1px solid var(--border-color); padding-bottom:20px; margin-bottom:15px;">
-            <h3 style="margin:0 0 8px 0;font-size:1rem;">参加する</h3>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="join-id-input" class="auth-input" placeholder="Wiki ID...">
-                <input type="password" id="join-pass-input" class="auth-input" placeholder="参加パスワード (既存はPrePass)">
-                <button class="btn-primary" onclick="app.joinWiki()">参加</button>
-            </div>
-        </div>
-
-        <div>
-            <h3 style="margin:0 0 8px 0;font-size:1rem;">新規作成</h3>
-            <div style="display:flex; flex-direction:column; gap:8px;">
-                <input type="text" id="create-id-input" class="auth-input" placeholder="希望Wiki ID (英数字)">
-                <input type="password" id="create-pass-input" class="auth-input" placeholder="参加パスワードを設定">
-                <button class="btn-primary" onclick="app.createWiki()">作成</button>
-            </div>
-        </div>
-        
-        <button class="btn-cancel" style="margin-top:15px;" onclick="document.getElementById('join-create-modal').classList.add('hidden')">閉じる</button>
-    </div>
-</div>
-
-<!-- Wiki Info Modal with Password Edit -->
-<div id="wiki-info-modal" class="modal-overlay hidden">
-    <div class="modal">
-        <h2>Wiki情報・設定</h2>
-        
-        <label style="font-size:0.8rem;font-weight:bold;">ID (共有用)</label>
-        <div style="display:flex;gap:5px;margin-bottom:10px;">
-            <input type="text" id="info-wiki-id" class="auth-input" readonly style="background:var(--bg-color);">
-            <button class="btn-primary" style="width:auto;" onclick="app.copyWikiId()">Copy</button>
-        </div>
-
-        <label style="font-size:0.8rem;font-weight:bold;">参加パスワード変更</label>
-        <input type="password" id="info-pass-input" class="auth-input" placeholder="新しいパスワード (空欄で変更なし)">
-
-        <label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">創始者 (表示名)</label>
-        <input type="text" id="info-owner-display" class="auth-input" placeholder="表示名">
-
-        <label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">説明・ルール</label>
-        <textarea id="info-desc" class="wiki-desc-input" placeholder="このWikiについて..." style="min-height:80px;"></textarea>
-        
-        <label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">備考</label>
-        <input type="text" id="info-notes" class="auth-input" placeholder="メモ">
-        
-        <!-- Danger Zone -->
-        <div class="danger-zone" id="danger-zone-owner" style="display:none;">
-            <button class="btn-primary danger" onclick="app.deleteWiki()">このWikiを完全に削除する</button>
-        </div>
-        <div class="danger-zone" id="danger-zone-member" style="display:none;">
-            <button class="btn-cancel" style="color:var(--danger-color); border-color:var(--danger-color);" onclick="app.leaveWiki()">このWikiから脱退する</button>
-        </div>
-
-        <div class="modal-btns" style="margin-top:20px;">
-            <button class="btn-primary" onclick="app.saveWikiInfo()">保存する</button>
-            <button class="btn-cancel" onclick="document.getElementById('wiki-info-modal').classList.add('hidden')">閉じる</button>
-        </div>
-    </div>
-</div>
+<!-- Dialogs -->
+<div id="join-create-modal" class="modal-overlay hidden"><div class="modal"><h2>Wiki追加</h2><div style="border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:15px;"><h3 style="margin:0 0 8px 0;font-size:1rem;">参加する</h3><div style="display:flex;flex-direction:column;gap:8px;"><input type="text" id="join-id-input" class="auth-input-in-modal" placeholder="Wiki ID..."><input type="password" id="join-pass-input" class="auth-input-in-modal" placeholder="パスワード"><button class="btn-primary" onclick="app.joinWiki()">参加</button></div></div><div><h3 style="margin:0 0 8px 0;font-size:1rem;">新規作成</h3><div style="display:flex;flex-direction:column;gap:8px;"><input type="text" id="create-id-input" class="auth-input-in-modal" placeholder="希望ID"><input type="password" id="create-pass-input" class="auth-input-in-modal" placeholder="パスワード設定"><button class="btn-primary" onclick="app.createWiki()">作成</button></div></div><button class="btn-cancel" style="margin-top:15px;" onclick="document.getElementById('join-create-modal').classList.add('hidden')">閉じる</button></div></div>
+<div id="wiki-info-modal" class="modal-overlay hidden"><div class="modal"><h2>Wiki情報</h2><label style="font-size:0.8rem;font-weight:bold;">ID</label><div style="display:flex;gap:5px;margin-bottom:10px;"><input type="text" id="info-wiki-id" class="auth-input-in-modal" readonly><button class="btn-primary" style="width:auto;" onclick="app.copyWikiId()">Copy</button></div><label style="font-size:0.8rem;font-weight:bold;">パスワード変更</label><input type="password" id="info-pass-input" class="auth-input-in-modal" placeholder="新パスワード"><label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">創始者</label><input type="text" id="info-owner-display" class="auth-input-in-modal"><label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">説明</label><textarea id="info-desc" class="wiki-desc-input"></textarea><label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">備考</label><input type="text" id="info-notes" class="auth-input-in-modal"><div id="danger-zone-owner" class="danger-zone" style="display:none;"><button class="btn-primary" style="background:var(--danger-color);" onclick="app.deleteWiki()">Wikiを削除</button></div><div id="danger-zone-member" class="danger-zone" style="display:none;"><button class="btn-cancel" style="color:var(--danger-color);border-color:var(--danger-color);" onclick="app.leaveWiki()">脱退</button></div><div class="modal-btns" style="margin-top:20px;"><button class="btn-primary" onclick="app.saveWikiInfo()">保存</button><button class="btn-cancel" onclick="document.getElementById('wiki-info-modal').classList.add('hidden')">閉じる</button></div></div></div>
 
 <script>
-// --- FIREBASE CONFIG (EMBEDDED) ---
 const firebaseConfig = {
   apiKey: "AIzaSyBBvRJbY3ceSwlrgm7CQkzNoPT9AiO-AFE",
   authDomain: "dokbox-4af2f.firebaseapp.com",
@@ -396,20 +339,23 @@ class Auth {
     constructor(app) {
         this.app = app; this.isRegister = false;
         auth.onAuthStateChanged(user => {
-            if(user) { this.uid=user.uid; document.getElementById('auth-modal').classList.add('hidden'); this.app.init(user.uid, user.email.split('@')[0]); }
-            else { document.getElementById('auth-modal').classList.remove('hidden'); }
+            if(user) { 
+                document.getElementById('login-screen').classList.add('fade-out');
+                setTimeout(() => {
+                    document.getElementById('app-container').classList.add('visible');
+                    document.getElementById('app-container').style.display = 'grid'; 
+                }, 500);
+                this.app.init(user.uid, user.email.split('@')[0]); 
+            } else { 
+                document.getElementById('login-screen').classList.remove('fade-out');
+            }
         });
     }
-    toggleMode() { 
-        this.isRegister = !this.isRegister; 
-        document.getElementById('auth-title').innerText = this.isRegister?"アカウント登録":"ログイン"; 
-        document.getElementById('auth-btn').innerText = this.isRegister?"登録して開始":"ログイン";
-        document.getElementById('auth-toggle').innerText = this.isRegister?"既存IDでログイン":"新規登録はこちら";
-    }
+    toggleMode() { this.isRegister = !this.isRegister; document.getElementById('auth-btn').innerText = this.isRegister?"START":"LOGIN"; document.getElementById('auth-toggle').innerText = this.isRegister?"既存IDでログイン":"新規登録はこちら"; }
     submit() {
         const id=document.getElementById('auth-id').value.trim(), pass=document.getElementById('auth-pass').value.trim();
-        if(!id.match(/^[a-zA-Z0-9_]+$/)) return document.getElementById('auth-error').innerText="IDは英数字のみ";
-        if(pass.length<6) return document.getElementById('auth-error').innerText="6文字以上";
+        if(!id.match(/^[a-zA-Z0-9_]+$/)) return document.getElementById('auth-error').innerText="IDは英数字のみです";
+        if(pass.length<6) return document.getElementById('auth-error').innerText="パスワードは6文字以上です";
         const p = this.isRegister ? auth.createUserWithEmailAndPassword(id+DUMMY_DOMAIN,pass) : auth.signInWithEmailAndPassword(id+DUMMY_DOMAIN,pass);
         p.catch(e => document.getElementById('auth-error').innerText=e.message);
     }
@@ -449,10 +395,7 @@ class HybridEditor {
         return h;
     }
     onFocus(i, div) { div.classList.add('editing'); div.innerText=this.lines[i]; }
-    onBlur(i, div) { 
-        div.classList.remove('editing'); this.lines[i]=div.innerText.replace(/\n/g,''); 
-        div.innerHTML=this.parse(this.lines[i]); this.onChange(this.lines.join('\n')); 
-    }
+    onBlur(i, div) { div.classList.remove('editing'); this.lines[i]=div.innerText.replace(/\n/g,''); div.innerHTML=this.parse(this.lines[i]); this.onChange(this.lines.join('\n')); }
     onInput(i, div) { this.lines[i]=div.innerText.replace(/\n/g,''); window.app.triggerSave(); }
     onKey(e, i) {
         if(e.key==='Enter') {
@@ -469,15 +412,9 @@ class HybridEditor {
 class App {
     constructor() {
         this.auth = new Auth(this);
-        this.settings = { theme:'light', accentColor:'#5865F2' };
+        this.settings = { theme:'light', accentColor:'#333' };
         this.editor = new HybridEditor(document.getElementById('hybrid-editor'), t=>this.saveContent(t));
-        
-        this.els = {
-            title: document.getElementById('page-title'),
-            sidebar: document.getElementById('sidebar'),
-            backdrop: document.getElementById('sidebar-backdrop')
-        };
-        
+        this.els = { title: document.getElementById('page-title') };
         this.els.title.addEventListener('input', () => this.triggerSave());
         document.getElementById('hybrid-editor').addEventListener('click', e => {
             if(e.target.classList.contains('r-link')) {
@@ -490,6 +427,8 @@ class App {
         });
         document.getElementById('search-input').addEventListener('input', e=>this.renderList(e.target.value));
         document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) document.getElementById('settings-popover').classList.add('hidden'); });
+        document.getElementById('accent-color-picker').addEventListener('input', (e)=>this.setAccentColor(e.target.value));
+        document.getElementById('accent-color-picker').addEventListener('change', ()=>this.saveSettings());
     }
 
     async init(uid, displayId) {
@@ -503,7 +442,7 @@ class App {
                 const id=d.id, data=d.data();
                 const el=document.createElement('div'); el.className=`wiki-icon wiki-icon-item ${this.currentWikiId===id?'active':''}`;
                 el.innerText=(data.name||id).substring(0,2).toUpperCase(); el.id=`i-${id}`; el.onclick=()=>this.switchWiki(id);
-                this.els.sidebar.insertBefore(el,sep);
+                document.getElementById('sidebar').insertBefore(el,sep);
                 if(c===0)f=id; c++;
             });
             if(c>0 && !this.currentWikiId) this.switchWiki(f); else if(c===0) this.showJoinCreateModal();
@@ -523,15 +462,10 @@ class App {
     }
 
     toggleSidebar(show) {
-        const sb=this.els.sidebar, bd=this.els.backdrop;
+        const sb=document.getElementById('sidebar'), bd=document.getElementById('sidebar-backdrop');
         if(show){ sb.classList.add('open'); bd.classList.add('open'); } else { sb.classList.remove('open'); bd.classList.remove('open'); }
     }
-
-    navigateHome() {
-        this.currentPageId=null; document.body.setAttribute('data-view','list');
-        document.querySelectorAll('.card').forEach(c=>c.classList.remove('active'));
-    }
-
+    navigateHome() { this.currentPageId=null; document.body.setAttribute('data-view','list'); document.querySelectorAll('.card').forEach(c=>c.classList.remove('active')); }
     createNewPage() { this._create(''); }
     createLinkedPage(t) { this._create(t); }
     _create(t) {
@@ -541,7 +475,6 @@ class App {
         db.collection('wikis').doc(this.currentWikiId).collection('pages').doc(id).set(d);
         this.openPage(id, d);
     }
-
     openPage(id, data=null) {
         const p = data || this.pages.find(x=>x.id===id); if(!p) return;
         this.currentPageId=id;
@@ -550,11 +483,9 @@ class App {
         this.editor.setContent(p.lines.join('\n'));
         this.renderRelated(p.title, p.lines.join('\n'));
     }
-
     saveContent(txt) { this.triggerSave(); this.renderRelated(this.els.title.value, txt); }
     triggerSave() {
-        document.getElementById('save-status').innerText="Typing...";
-        clearTimeout(this.st);
+        document.getElementById('save-status').innerText="Typing..."; clearTimeout(this.st);
         this.st = setTimeout(() => {
             if(!this.currentWikiId||!this.currentPageId) return;
             db.collection('wikis').doc(this.currentWikiId).collection('pages').doc(this.currentPageId).set({
@@ -563,14 +494,12 @@ class App {
             document.getElementById('save-status').innerText="Saved";
         }, 1000);
     }
-
     renderList(q="") {
         const grid=document.getElementById('card-grid'); grid.innerHTML='';
         let list=[...this.pages].sort((a,b)=>b.updatedAt-a.updatedAt);
         if(q) list=list.filter(p=>(p.title||"").toLowerCase().includes(q.toLowerCase()));
         if(list.length===0) document.getElementById('empty-msg').classList.remove('hidden');
         else document.getElementById('empty-msg').classList.add('hidden');
-        
         list.forEach(p=>{
             const el=document.createElement('div'); el.className='card';
             let th=''; const m=p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]]+)\]/i);
@@ -580,7 +509,6 @@ class App {
             grid.appendChild(el);
         });
     }
-
     renderRelated(t, txt) {
         const grid=document.getElementById('related-grid'); grid.innerHTML='';
         const links=[]; let m; const re=/\[([^\[\]]+)\]|#(\S+)/g;
@@ -600,8 +528,7 @@ class App {
             });
         } else { document.getElementById('related-section').classList.add('hidden'); }
     }
-
-    // Actions
+    
     toggleSettings(){ document.getElementById('settings-popover').classList.toggle('hidden'); }
     applySettings(){
         document.body.setAttribute('data-theme',this.settings.theme);
@@ -621,53 +548,29 @@ class App {
             document.getElementById('info-desc').value=da.description||'';
             document.getElementById('info-notes').value=da.notes||'';
             document.getElementById('info-owner-display').value=da.ownerName||'';
-            document.getElementById('info-pass-input').value=''; 
-            
-            // Check Owner
             const isOwner = da.owner === this.uid;
-            document.getElementById('danger-zone-owner').style.display = isOwner ? 'flex' : 'none';
-            document.getElementById('danger-zone-member').style.display = isOwner ? 'none' : 'flex';
+            document.getElementById('danger-zone-owner').style.display=isOwner?'flex':'none';
+            document.getElementById('danger-zone-member').style.display=isOwner?'none':'flex';
         });
     }
     saveWikiInfo(){
         const pass = document.getElementById('info-pass-input').value.trim();
-        const data = {
-            description:document.getElementById('info-desc').value,
-            notes:document.getElementById('info-notes').value,
-            ownerName:document.getElementById('info-owner-display').value
-        };
-        if(pass) data.password = pass; // Update password only if provided
-        
-        db.collection('wikis').doc(this.currentWikiId).set(data,{merge:true}).then(()=>{
-            alert('設定を保存しました');
-            document.getElementById('wiki-info-modal').classList.add('hidden');
-        });
+        const data = { description:document.getElementById('info-desc').value, notes:document.getElementById('info-notes').value, ownerName:document.getElementById('info-owner-display').value };
+        if(pass) data.password = pass;
+        db.collection('wikis').doc(this.currentWikiId).set(data,{merge:true}).then(()=>{ alert('保存しました'); document.getElementById('wiki-info-modal').classList.add('hidden'); });
     }
-    // Updated Copy function
-    copyWikiId() {
-        if (!this.currentWikiId) return;
-        const textArea = document.createElement("textarea");
-        textArea.value = this.currentWikiId;
-        textArea.style.position = "fixed";
-        textArea.style.left = "-9999px";
-        document.body.appendChild(textArea);
-        textArea.focus();
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            alert('IDをコピーしました: ' + this.currentWikiId);
-        } catch (err) {
-            console.error('Copy failed', err);
-            prompt("コピーできませんでした。手動でコピーしてください:", this.currentWikiId);
-        }
-        document.body.removeChild(textArea);
+    copyWikiId(){ 
+        const val = this.currentWikiId;
+        if(!val)return;
+        const t = document.createElement("textarea"); t.value = val; t.style.position="fixed"; t.style.left="-9999px"; document.body.appendChild(t); t.focus(); t.select();
+        try { document.execCommand('copy'); alert('IDをコピーしました'); } catch(e){ prompt("コピー:", val); }
+        document.body.removeChild(t);
     }
     async createWiki(){
         const id=document.getElementById('create-id-input').value.trim();
         const pass=document.getElementById('create-pass-input').value.trim();
         if(!id.match(/^[a-zA-Z0-9_-]+$/)) return alert('英数字のみ');
-        if(!pass) return alert('パスワードを設定してください');
-        
+        if(!pass) return alert('パスワード必須');
         let tid=id, ex=true, s=0;
         while(ex){ const d=await db.collection('wikis').doc(tid).get(); if(d.exists){s=Math.floor(Math.random()*9000)+1000; tid=`${id}-${s}`;}else{ex=false;}}
         const b=db.batch(); 
@@ -678,67 +581,37 @@ class App {
     async joinWiki(){
         const id=document.getElementById('join-id-input').value.trim(); 
         const pass=document.getElementById('join-pass-input').value.trim();
-        if(!id || !pass) return alert('IDとパスワードを入力してください');
-        
-        const d=await db.collection('wikis').doc(id).get(); 
-        if(!d.exists) return alert('なし');
-        
+        if(!id || !pass) return alert('IDとパスワード必須');
+        const d=await db.collection('wikis').doc(id).get(); if(!d.exists) return alert('なし');
         const data = d.data();
-        const correctPass = data.password || 'PrePass'; // Default to PrePass if none
-        
-        if(pass !== correctPass) return alert('パスワードが違います');
-        
+        if(pass !== (data.password || 'PrePass')) return alert('パスワード違い');
         await db.collection('users').doc(this.uid).collection('joinedWikis').doc(id).set({name:id,role:'member',joinedAt:Date.now()});
         document.getElementById('join-create-modal').classList.add('hidden');
     }
-    confirmDeletePage(){
-        if(!this.currentWikiId || !this.currentPageId) return alert('削除できません');
-        if(confirm("ページを削除しますか？")){
-            db.collection('wikis').doc(this.currentWikiId).collection('pages').doc(this.currentPageId).delete()
-            .then(()=>{ this.navigateHome(); this.renderList(document.getElementById('search-input').value); })
-            .catch(e=>alert("エラー: "+e.message));
-        }
-    }
-    
-    // --- New Delete/Leave Wiki ---
     async deleteWiki() {
-        if(!this.currentWikiId) return;
-        if(!confirm("本当にこのWikiを削除しますか？\nページデータも全て削除され、復元できません。")) return;
-        
-        try {
-            // Delete pages in batches
-            const pagesRef = db.collection('wikis').doc(this.currentWikiId).collection('pages');
-            let hasPages = true;
-            
-            while(hasPages) {
-                const snap = await pagesRef.limit(400).get();
-                if(snap.empty) {
-                    hasPages = false;
-                } else {
-                    const batch = db.batch();
-                    snap.forEach(doc => batch.delete(doc.ref));
-                    await batch.commit();
-                }
-            }
-            
-            const batch = db.batch();
-            batch.delete(db.collection('wikis').doc(this.currentWikiId));
-            batch.delete(db.collection('users').doc(this.uid).collection('joinedWikis').doc(this.currentWikiId));
-            await batch.commit();
-            
-            alert("削除しました");
-            location.reload();
-        } catch(e) {
-            console.error(e);
-            alert("削除エラー: " + e.message);
+        if(!confirm("本当に削除しますか？\nページデータも全て削除されます。")) return;
+        const pagesRef = db.collection('wikis').doc(this.currentWikiId).collection('pages');
+        let hasPages = true;
+        while(hasPages) {
+            const snap = await pagesRef.limit(400).get();
+            if(snap.empty) hasPages = false;
+            else { const batch = db.batch(); snap.forEach(doc => batch.delete(doc.ref)); await batch.commit(); }
         }
+        const b = db.batch();
+        b.delete(db.collection('wikis').doc(this.currentWikiId));
+        b.delete(db.collection('users').doc(this.uid).collection('joinedWikis').doc(this.currentWikiId));
+        await b.commit(); alert("削除しました"); location.reload();
     }
     leaveWiki() {
-        if(!confirm("このWikiから脱退しますか？")) return;
-        db.collection('users').doc(this.uid).collection('joinedWikis').doc(this.currentWikiId).delete()
-        .then(() => { alert("脱退しました"); location.reload(); });
+        if(!confirm("脱退しますか？")) return;
+        db.collection('users').doc(this.uid).collection('joinedWikis').doc(this.currentWikiId).delete().then(()=>{alert("脱退しました");location.reload();});
     }
-
+    confirmDeletePage(){
+        if(confirm("ページを削除しますか？")){
+            db.collection('wikis').doc(this.currentWikiId).collection('pages').doc(this.currentPageId).delete()
+            .then(()=>{ this.navigateHome(); this.renderList(document.getElementById('search-input').value); });
+        }
+    }
     esc(s){ return s?s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"): ''; }
 }
 
@@ -746,5 +619,3 @@ window.app = new App();
 </script>
 </body>
 </html>
-
-
