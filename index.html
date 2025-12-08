@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DokBox Teams</title>
+    
+    <!-- Favicon: Box with 'D' -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 20 L56 20 L50 56 L14 56 Z' fill='%235865F2'/><path d='M8 20 L2 8 L62 8 L56 20 Z' fill='%23404EED'/><text x='32' y='50' font-family='sans-serif' font-weight='bold' font-size='28' fill='white' text-anchor='middle'>D</text></svg>">
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
@@ -201,10 +205,13 @@
         .auth-input, .wiki-desc-input { padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; width: 100%; outline: none; }
         .auth-input:focus { border-color: var(--accent-color); }
         .btn-primary { padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-primary.danger { background: var(--danger-color); }
         .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
         #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
         .toggle-link { text-align: center; font-size: 0.85rem; color: var(--accent-color); cursor: pointer; text-decoration: underline; margin-top: 5px; }
+        
+        .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
     </style>
 </head>
 <body data-view="list">
@@ -355,6 +362,14 @@
         <label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">備考</label>
         <input type="text" id="info-notes" class="auth-input" placeholder="メモ">
         
+        <!-- Danger Zone -->
+        <div class="danger-zone" id="danger-zone-owner" style="display:none;">
+            <button class="btn-primary danger" onclick="app.deleteWiki()">このWikiを完全に削除する</button>
+        </div>
+        <div class="danger-zone" id="danger-zone-member" style="display:none;">
+            <button class="btn-cancel" style="color:var(--danger-color); border-color:var(--danger-color);" onclick="app.leaveWiki()">このWikiから脱退する</button>
+        </div>
+
         <div class="modal-btns" style="margin-top:20px;">
             <button class="btn-primary" onclick="app.saveWikiInfo()">保存する</button>
             <button class="btn-cancel" onclick="document.getElementById('wiki-info-modal').classList.add('hidden')">閉じる</button>
@@ -363,6 +378,7 @@
 </div>
 
 <script>
+// --- FIREBASE CONFIG (EMBEDDED) ---
 const firebaseConfig = {
   apiKey: "AIzaSyBBvRJbY3ceSwlrgm7CQkzNoPT9AiO-AFE",
   authDomain: "dokbox-4af2f.firebaseapp.com",
@@ -605,7 +621,12 @@ class App {
             document.getElementById('info-desc').value=da.description||'';
             document.getElementById('info-notes').value=da.notes||'';
             document.getElementById('info-owner-display').value=da.ownerName||'';
-            document.getElementById('info-pass-input').value=''; // clear pass field
+            document.getElementById('info-pass-input').value=''; 
+            
+            // Check Owner
+            const isOwner = da.owner === this.uid;
+            document.getElementById('danger-zone-owner').style.display = isOwner ? 'flex' : 'none';
+            document.getElementById('danger-zone-member').style.display = isOwner ? 'none' : 'flex';
         });
     }
     saveWikiInfo(){
@@ -622,7 +643,25 @@ class App {
             document.getElementById('wiki-info-modal').classList.add('hidden');
         });
     }
-    copyWikiId(){ navigator.clipboard.writeText(this.currentWikiId).then(()=>alert('Copied')); }
+    // Updated Copy function
+    copyWikiId() {
+        if (!this.currentWikiId) return;
+        const textArea = document.createElement("textarea");
+        textArea.value = this.currentWikiId;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            alert('IDをコピーしました: ' + this.currentWikiId);
+        } catch (err) {
+            console.error('Copy failed', err);
+            prompt("コピーできませんでした。手動でコピーしてください:", this.currentWikiId);
+        }
+        document.body.removeChild(textArea);
+    }
     async createWiki(){
         const id=document.getElementById('create-id-input').value.trim();
         const pass=document.getElementById('create-pass-input').value.trim();
@@ -660,6 +699,46 @@ class App {
             .catch(e=>alert("エラー: "+e.message));
         }
     }
+    
+    // --- New Delete/Leave Wiki ---
+    async deleteWiki() {
+        if(!this.currentWikiId) return;
+        if(!confirm("本当にこのWikiを削除しますか？\nページデータも全て削除され、復元できません。")) return;
+        
+        try {
+            // Delete pages in batches
+            const pagesRef = db.collection('wikis').doc(this.currentWikiId).collection('pages');
+            let hasPages = true;
+            
+            while(hasPages) {
+                const snap = await pagesRef.limit(400).get();
+                if(snap.empty) {
+                    hasPages = false;
+                } else {
+                    const batch = db.batch();
+                    snap.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                }
+            }
+            
+            const batch = db.batch();
+            batch.delete(db.collection('wikis').doc(this.currentWikiId));
+            batch.delete(db.collection('users').doc(this.uid).collection('joinedWikis').doc(this.currentWikiId));
+            await batch.commit();
+            
+            alert("削除しました");
+            location.reload();
+        } catch(e) {
+            console.error(e);
+            alert("削除エラー: " + e.message);
+        }
+    }
+    leaveWiki() {
+        if(!confirm("このWikiから脱退しますか？")) return;
+        db.collection('users').doc(this.uid).collection('joinedWikis').doc(this.currentWikiId).delete()
+        .then(() => { alert("脱退しました"); location.reload(); });
+    }
+
     esc(s){ return s?s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"): ''; }
 }
 
@@ -667,3 +746,5 @@ window.app = new App();
 </script>
 </body>
 </html>
+
+
