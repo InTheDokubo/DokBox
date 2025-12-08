@@ -6,6 +6,7 @@
     <title>DokBox Teams</title>
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 20 L56 20 L50 56 L14 56 Z' fill='%23333'/><text x='32' y='50' font-family='sans-serif' font-weight='bold' font-size='28' fill='white' text-anchor='middle'>D</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='white'/><path d='M8 20 L56 20 L50 56 L14 56 Z' fill='white' stroke='%23333' stroke-width='4' stroke-linejoin='round'/><path d='M8 20 L2 8 L62 8 L56 20 Z' fill='white' stroke='%23333' stroke-width='4' stroke-linejoin='round'/><text x='32' y='52' font-family='sans-serif' font-weight='900' font-size='30' fill='%23333' text-anchor='middle'>D</text></svg>">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
@@ -14,10 +15,14 @@
     <style>
         :root {
             /* Colors */
-            --sb-bg: #f0f0f0; --sb-item: #e0e0e0; --sb-active: #333; --sb-text: #333;
+            --sb-bg: #f2f3f5; --sb-item: #e3e5e8; --sb-active: #333; --sb-text: #333;
             --bg-color: #ffffff; --card-bg: #f9f9f9; --text-main: #333333; --text-sub: #666666;
-            --border-color: #ddd; --input-bg: #fff; --input-focus-bg: #fff;
-            --accent-color: #333; --link-color: #0066cc; --danger-color: #ff4444;
+            --border-color: #e3e5e8; --input-bg: #fff; --input-focus-bg: #fff;
+            
+            /* Accent Color (Dynamic) */
+            --accent-color: #5865F2; 
+            
+            --link-color: #0066cc; --danger-color: #ff4444;
             
             /* Dimensions */
             --sidebar-width: 72px;
@@ -27,11 +32,29 @@
             --sb-bg: #202225; --sb-item: #2f3136; --sb-active: #40444b; --sb-text: #dcddde;
             --bg-color: #36393f; --card-bg: #2f3136; --text-main: #dcddde; --text-sub: #b9bbbe;
             --border-color: #202225; --input-bg: #40444b; --input-focus-bg: #202225;
-            --accent-color: #5865F2;
+            /* Accent color removed here to allow JS override */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: "M PLUS Rounded 1c", sans-serif; background: var(--bg-color); color: var(--text-main); transition: background 0.3s, color 0.3s; }
+
+        /* --- LOADING --- */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9); z-index: 10000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            transition: opacity 0.3s;
+        }
+        #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+        .loader-scene { width: 40px; height: 40px; perspective: 400px; margin-bottom: 20px; }
+        .loader-cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: loaderSpin 2s infinite linear; }
+        .lf { position: absolute; width: 40px; height: 40px; border: 2px solid #333; background: transparent; }
+        .lf-f { transform: translateZ(20px); } .lf-b { transform: rotateY(180deg) translateZ(20px); }
+        .lf-r { transform: rotateY(90deg) translateZ(20px); } .lf-l { transform: rotateY(-90deg) translateZ(20px); }
+        .lf-t { transform: rotateX(90deg) translateZ(20px); } .lf-bt { transform: rotateX(-90deg) translateZ(20px); }
+        @keyframes loaderSpin { 0% { transform: rotateX(0deg) rotateY(0deg); } 100% { transform: rotateX(360deg) rotateY(360deg); } }
+        .loading-text { font-family: 'Arial Black', sans-serif; font-weight: 900; color: #333; letter-spacing: 1px; font-size: 1.2rem; animation: pulse 1s infinite alternate; }
+        @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
 
         /* --- LOGIN SCREEN --- */
         #login-screen {
@@ -71,38 +94,40 @@
         /* --- APP CONTAINER --- */
         #app-container {
             display: grid; width: 100vw; height: 100%;
-            /* Desktop Layout: Sidebar | Main */
-            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-columns: 1fr; /* Sidebar is overlay */
             grid-template-rows: 100%;
-            transition: grid-template-columns 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             opacity: 0; display: none;
         }
-        #app-container.visible { opacity: 1; }
-        
-        /* Sidebar Closed State (PC) */
-        #app-container.sidebar-closed {
-            grid-template-columns: 0 1fr;
-        }
+        #app-container.visible { opacity: 1; display: block; }
 
-        /* Sidebar */
+        /* Sidebar (Drawer) */
         #sidebar {
+            position: fixed; top: 0; left: 0; height: 100%; width: var(--sidebar-width);
             background: var(--sb-bg); display: flex; flex-direction: column; align-items: center; 
             padding-top: 15px; gap: 12px; overflow-y: auto; z-index: 3000;
-            border-right: 1px solid rgba(0,0,0,0.2);
-            overflow-x: hidden; /* Hide content when width is 0 */
+            border-right: 1px solid rgba(0,0,0,0.1);
+            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 4px 0 15px rgba(0,0,0,0.15);
         }
-        .wiki-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--sb-item); color: var(--sb-text); display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; overflow: hidden; user-select: none; flex-shrink: 0; position: relative; }
-        .wiki-icon:hover, .wiki-icon.active { border-radius: 12px; background: var(--accent-color); color: white; }
-        .wiki-icon.add-btn { color: #333; border: 2px dashed #ccc; }
-        .wiki-icon.add-btn:hover { background: #333; color: white; border-style: solid; }
+        #sidebar.open { transform: translateX(0); }
+        
+        /* Sidebar Backdrop */
+        #sidebar-backdrop {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2900; opacity: 0; transition: opacity 0.3s;
+            backdrop-filter: blur(2px);
+        }
+        #sidebar-backdrop.open { display: block; opacity: 1; }
+
+        .wiki-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--sb-item); color: var(--sb-text); display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; overflow: hidden; user-select: none; flex-shrink: 0; position: relative; border: 2px solid transparent; }
+        .wiki-icon:hover, .wiki-icon.active { border-radius: 16px; background: var(--accent-color); color: white; border-color: transparent; }
+        .wiki-icon.add-btn { color: var(--sb-text); border: 2px dashed #999; background: transparent; }
+        .wiki-icon.add-btn:hover { background: var(--accent-color); color: white; border-style: solid; border-color: var(--accent-color); }
         .app-logo-sb { color: #ccc; font-weight: 900; }
         .sidebar-footer { margin-top: auto; padding-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
 
         /* Main Content */
-        #main-content { 
-            position: relative; overflow: hidden; display: flex; flex-direction: column; 
-            background: var(--bg-color); width: 100%;
-        }
+        #main-content { position: relative; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-color); width: 100%; height: 100%; }
 
         #list-column, #detail-column {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -111,25 +136,25 @@
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s;
         }
         
+        /* View Switching Logic */
         body[data-view="list"] #list-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
-        body[data-view="list"] #detail-column { transform: translateX(20%); opacity: 0; z-index: 0; pointer-events: none; }
-        
-        body[data-view="detail"] #list-column { transform: translateX(-20%); opacity: 0; z-index: 0; pointer-events: none; }
+        body[data-view="list"] #detail-column { transform: translateX(30%); opacity: 0; z-index: 0; pointer-events: none; }
+        body[data-view="detail"] #list-column { transform: translateX(-30%); opacity: 0; z-index: 0; pointer-events: none; }
         body[data-view="detail"] #detail-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
 
         /* Headers */
         .column-header, .detail-header { height: var(--header-height); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; gap: 10px; }
         .header-title-area { display: flex; align-items: center; gap: 10px; overflow: hidden; }
+        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 8px; border-radius: 8px; flex-shrink: 0; }
+        .menu-btn:hover { background: var(--input-bg); }
         .header-title { font-weight: 800; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
         .wiki-edit-btn { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--text-sub); border-radius: 4px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
         .wiki-edit-btn:hover { background: var(--input-bg); color: var(--accent-color); }
-        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 5px; border-radius: 50%; flex-shrink: 0; }
-        .menu-btn:hover { background: var(--input-bg); }
         
         /* List View Items */
         .search-area { padding: 15px 20px; background: var(--bg-color); flex-shrink: 0; width: 100%; display: flex; justify-content: center; }
         .search-input { width: 100%; max-width: 800px; padding: 10px 15px 10px 35px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
+        .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2); }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-sub); pointer-events: none; }
         
         #list-scroll { flex-grow: 1; overflow-y: auto; padding: 0 20px 40px 20px; -webkit-overflow-scrolling: touch; width: 100%; display: flex; flex-direction: column; align-items: center; }
@@ -164,8 +189,8 @@
         /* Utils */
         .hidden { display: none !important; }
         .controls-area { display: flex; align-items: center; gap: 10px; }
-        .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--accent-color); color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.2s; }
-        .btn-circle:hover { transform: scale(1.1); background: #000; }
+        .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--accent-color); color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.2s; flex-shrink: 0; }
+        .btn-circle:hover { transform: scale(1.1); }
         .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-sub); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .btn-icon:hover { background: var(--input-bg); color: var(--text-main); }
         .btn-icon.danger { color: #ff6b6b; }
@@ -175,6 +200,7 @@
         .icon-moon { transform: rotate(90deg) scale(0.5); opacity: 0; } .icon-sun { transform: rotate(0) scale(1); opacity: 1; }
         [data-theme="dark"] .icon-sun { transform: rotate(-90deg) scale(0.5); opacity: 0; } [data-theme="dark"] .icon-moon { transform: rotate(0) scale(1); opacity: 1; }
         
+        /* Popover & Modal */
         .settings-popover { position: absolute; top: 65px; right: 10px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; width: 260px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 4000; display: flex; flex-direction: column; gap: 15px; }
         .settings-popover h3 { margin: 0; font-size: 0.95rem; color: var(--text-sub); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -185,18 +211,9 @@
         .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
         #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
-        .col-options { display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 6px; }
-        .col-option { flex: 1; text-align: center; padding: 8px 0; font-size: 0.9rem; cursor: pointer; border-radius: 4px; color: var(--text-sub); white-space: nowrap; }
-        .col-option.active { background: var(--card-bg); color: var(--accent-color); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
-
-        /* Responsive Overrides (Mobile) */
+        
         @media (max-width: 768px) {
-            #app-container { display: block; position: relative; } /* Mobile sidebar handling */
-            #sidebar { position: fixed; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 4px 0 15px rgba(0,0,0,0.3); border-right: none; }
-            #sidebar.open { transform: translateX(0); }
-            #sidebar-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2900; opacity: 0; transition: opacity 0.3s; }
-            #sidebar-backdrop.open { display: block; opacity: 1; }
             .card-grid { grid-template-columns: repeat(2, 1fr); }
             .editor-wrapper { padding: 20px; }
             input.title-input { font-size: 1.8rem; margin-bottom: 20px; }
@@ -204,6 +221,12 @@
     </style>
 </head>
 <body data-view="list">
+
+<!-- LOADING -->
+<div id="loading-overlay" class="hidden">
+    <div class="loader-scene"><div class="loader-cube"><div class="lf lf-f"></div><div class="lf lf-b"></div><div class="lf lf-r"></div><div class="lf lf-l"></div><div class="lf lf-t"></div><div class="lf lf-bt"></div></div></div>
+    <div class="loading-text">Loading...</div>
+</div>
 
 <div id="sidebar-backdrop" onclick="app.toggleSidebar(false)"></div>
 
@@ -236,7 +259,7 @@
         </div>
     </aside>
 
-    <!-- LIST COLUMN (Full Screen on all devices) -->
+    <!-- LIST COLUMN -->
     <section id="list-column">
         <div class="column-header">
             <div class="header-title-area">
@@ -260,7 +283,6 @@
                 <div id="settings-popover" class="settings-popover hidden">
                     <h3>設定 <span id="current-user-id" style="font-size:0.7rem; color:var(--accent-color);"></span></h3>
                     <div class="setting-item"><div class="setting-label">テーマカラー</div><input type="color" id="accent-color-picker"></div>
-                    <div class="setting-item"><div class="setting-label">モバイル表示列数</div><div class="col-options" id="col-options"><div class="col-option" onclick="app.setMobileCols(1)" data-val="1">1</div><div class="col-option" onclick="app.setMobileCols(2)" data-val="2">2</div><div class="col-option" onclick="app.setMobileCols(3)" data-val="3">3</div></div></div>
                     <div class="setting-item" style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:10px;"><button class="btn-cancel" style="border:none; text-align:left; padding:0;" onclick="app.auth.logout()">ログアウト</button></div>
                 </div>
                 <button class="btn-circle" onclick="app.createNewPage()">+</button>
@@ -282,40 +304,21 @@
         </div>
     </section>
 
-    <!-- 3. DETAIL VIEW -->
     <section id="detail-column" class="empty">
         <div class="detail-header">
-            <div class="back-btn" onclick="app.navigateHome()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-                <span>戻る</span>
-            </div>
-            
-            <div class="detail-actions">
-                <span id="save-status" style="font-size:0.75rem; color:var(--text-sub);"></span>
-                <button class="btn-icon danger" onclick="app.confirmDeletePage()">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-                </button>
-            </div>
+            <div class="back-btn" onclick="app.navigateHome()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>戻る</span></div>
+            <div class="detail-actions"><span id="save-status" style="font-size:0.75rem;color:var(--text-sub);"></span><button class="btn-icon danger" onclick="app.confirmDeletePage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>
         </div>
-
-        <div class="editor-scroll">
-            <div class="editor-wrapper">
-                <input type="text" id="page-title" class="title-input" placeholder="タイトルなし">
-                <div id="hybrid-editor"></div>
-                <div id="related-section" class="hidden" style="margin-top:60px; border-top:2px solid var(--border-color); padding-top:20px;">
-                    <div style="font-weight:bold; color:var(--text-sub); margin-bottom:15px; font-size:0.9rem;">関連ページ</div>
-                    <div id="related-grid" class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));"></div>
-                </div>
-            </div>
-        </div>
+        <div class="editor-scroll"><div class="editor-wrapper"><input type="text" id="page-title" class="title-input" placeholder="タイトルなし"><div id="hybrid-editor"></div><div id="related-section" class="hidden" style="margin-top:60px;border-top:2px solid var(--border-color);padding-top:20px;"><div style="font-weight:bold;color:var(--text-sub);margin-bottom:15px;font-size:0.9rem;">関連ページ</div><div id="related-grid" class="card-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));"></div></div></div></div>
     </section>
 </div>
 
-<!-- Modals -->
+<!-- Dialogs (Join/Create/Info) -->
 <div id="join-create-modal" class="modal-overlay hidden"><div class="modal"><h2>Wiki追加</h2><div style="border-bottom:1px solid var(--border-color);padding-bottom:15px;margin-bottom:15px;"><h3 style="margin:0 0 8px 0;font-size:1rem;">参加する</h3><div style="display:flex;flex-direction:column;gap:8px;"><input type="text" id="join-id-input" class="auth-input-in-modal" placeholder="Wiki ID..."><input type="password" id="join-pass-input" class="auth-input-in-modal" placeholder="パスワード"><button class="btn-primary" onclick="app.joinWiki()">参加</button></div></div><div><h3 style="margin:0 0 8px 0;font-size:1rem;">新規作成</h3><div style="display:flex;flex-direction:column;gap:8px;"><input type="text" id="create-id-input" class="auth-input-in-modal" placeholder="希望ID"><input type="password" id="create-pass-input" class="auth-input-in-modal" placeholder="パスワード設定"><button class="btn-primary" onclick="app.createWiki()">作成</button></div></div><div id="force-logout-area" style="display:none;margin-top:15px;"><button class="btn-cancel" onclick="app.auth.logout()">ログアウトして戻る</button></div><button id="modal-close-btn" class="btn-cancel" style="margin-top:15px;" onclick="document.getElementById('join-create-modal').classList.add('hidden')">閉じる</button></div></div>
 <div id="wiki-info-modal" class="modal-overlay hidden"><div class="modal"><h2>Wiki情報</h2><label style="font-size:0.8rem;font-weight:bold;">ID (共有用)</label><div style="display:flex;gap:5px;margin-bottom:10px;"><input type="text" id="info-wiki-id" class="auth-input-in-modal" readonly><button class="btn-primary" style="width:auto;" onclick="app.copyWikiId()">Copy</button></div><label style="font-size:0.8rem;font-weight:bold;">パスワード変更</label><input type="password" id="info-pass-input" class="auth-input-in-modal" placeholder="新パスワード"><label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">創始者</label><input type="text" id="info-owner-display" class="auth-input-in-modal"><label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">説明</label><textarea id="info-desc" class="wiki-desc-input"></textarea><label style="font-size:0.8rem;font-weight:bold;margin-top:10px;">備考</label><input type="text" id="info-notes" class="auth-input-in-modal"><div id="danger-zone-owner" class="danger-zone" style="display:none;"><button class="btn-primary" style="background:var(--danger-color);" onclick="app.deleteWiki()">Wikiを削除</button></div><div id="danger-zone-member" class="danger-zone" style="display:none;"><button class="btn-cancel" style="color:var(--danger-color);border-color:var(--danger-color);" onclick="app.leaveWiki()">脱退</button></div><div class="modal-btns" style="margin-top:20px;"><button class="btn-primary" onclick="app.saveWikiInfo()">保存</button><button class="btn-cancel" onclick="document.getElementById('wiki-info-modal').classList.add('hidden')">閉じる</button></div></div></div>
 
 <script>
+// --- FIREBASE CONFIG (EMBEDDED) ---
 const firebaseConfig = {
   apiKey: "AIzaSyBBvRJbY3ceSwlrgm7CQkzNoPT9AiO-AFE",
   authDomain: "dokbox-4af2f.firebaseapp.com",
@@ -337,23 +340,40 @@ class Auth {
                 document.getElementById('login-screen').classList.add('fade-out');
                 setTimeout(() => {
                     document.getElementById('app-container').classList.add('visible');
-                    document.getElementById('app-container').style.display = 'grid'; 
+                    // Reset grid layout just in case
+                    if(window.innerWidth > 768) {
+                        document.getElementById('app-container').style.display = 'grid';
+                    } else {
+                        document.getElementById('app-container').style.display = 'block';
+                    }
                 }, 500);
                 this.app.init(user.uid, user.email.split('@')[0]); 
             } else { 
+                // Reset to login screen
                 document.getElementById('login-screen').classList.remove('fade-out');
                 document.getElementById('app-container').classList.remove('visible');
                 document.getElementById('app-container').style.display = 'none';
             }
         });
     }
-    toggleMode() { this.isRegister = !this.isRegister; document.getElementById('auth-btn').innerText = this.isRegister?"START (新規登録)":"LOGIN"; document.getElementById('auth-toggle').innerText = this.isRegister?"既存IDでログイン":"新規登録はこちら"; }
+    toggleMode() { 
+        this.isRegister = !this.isRegister; 
+        document.getElementById('auth-title').innerText = this.isRegister?"アカウント登録":"ログイン"; 
+        document.getElementById('auth-btn').innerText = this.isRegister?"登録して開始":"ログイン";
+        document.getElementById('auth-toggle').innerText = this.isRegister?"既存IDでログイン":"新規登録はこちら";
+    }
     submit() {
+        // Show loading
+        document.getElementById('loading-overlay').classList.remove('hidden');
         const id=document.getElementById('auth-id').value.trim(), pass=document.getElementById('auth-pass').value.trim();
-        if(!id.match(/^[a-zA-Z0-9_]+$/)) return document.getElementById('auth-error').innerText="IDは英数字のみです";
-        if(pass.length<6) return document.getElementById('auth-error').innerText="パスワードは6文字以上です";
+        if(!id.match(/^[a-zA-Z0-9_]+$/)) { document.getElementById('loading-overlay').classList.add('hidden'); return document.getElementById('auth-error').innerText="IDは英数字のみです"; }
+        if(pass.length<6) { document.getElementById('loading-overlay').classList.add('hidden'); return document.getElementById('auth-error').innerText="パスワードは6文字以上です"; }
         const p = this.isRegister ? auth.createUserWithEmailAndPassword(id+DUMMY_DOMAIN,pass) : auth.signInWithEmailAndPassword(id+DUMMY_DOMAIN,pass);
-        p.catch(e => document.getElementById('auth-error').innerText=e.message);
+        p.then(() => document.getElementById('loading-overlay').classList.add('hidden'))
+         .catch(e => {
+             document.getElementById('loading-overlay').classList.add('hidden');
+             document.getElementById('auth-error').innerText=e.message;
+         });
     }
     logout() { 
         auth.signOut().then(()=>{
@@ -361,6 +381,9 @@ class Auth {
             document.getElementById('app-container').classList.remove('visible');
             document.getElementById('login-screen').classList.remove('fade-out');
             document.getElementById('auth-pass').value = '';
+            // Reset Layout
+            app.navigateHome();
+            document.getElementById('sidebar').classList.remove('open');
         }); 
     }
 }
@@ -415,7 +438,7 @@ class HybridEditor {
 class App {
     constructor() {
         this.auth = new Auth(this);
-        this.settings = { theme:'light', accentColor:'#333', mobileCols:1 };
+        this.settings = { theme:'light', accentColor:'#333' };
         this.editor = new HybridEditor(document.getElementById('hybrid-editor'), t=>this.saveContent(t));
         this.els = { title: document.getElementById('page-title') };
         this.els.title.addEventListener('input', () => this.triggerSave());
@@ -430,13 +453,17 @@ class App {
         });
         document.getElementById('search-input').addEventListener('input', e=>this.renderList(e.target.value));
         document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) document.getElementById('settings-popover').classList.add('hidden'); });
-        document.getElementById('accent-color-picker').addEventListener('input', (e)=>this.setAccentColor(e.target.value));
-        document.getElementById('accent-color-picker').addEventListener('change', ()=>this.saveSettings());
+        
+        // Color Picker Fix
+        const cp = document.getElementById('accent-color-picker');
+        cp.addEventListener('input', (e)=>this.setAccentColor(e.target.value));
+        cp.addEventListener('change', ()=>this.saveSettings());
     }
 
     async init(uid, displayId) {
         this.uid=uid; this.displayId=displayId;
         document.getElementById('current-user-id').innerText=displayId;
+        this.currentWikiId = null; 
         
         db.collection('users').doc(uid).onSnapshot(d=>{ if(d.exists&&d.data().settings) { this.settings={...this.settings,...d.data().settings}; this.applySettings(); }});
         db.collection('users').doc(uid).collection('joinedWikis').orderBy('joinedAt','asc').onSnapshot(snap => {
@@ -450,7 +477,7 @@ class App {
                 if(c===0)f=id; c++;
             });
             if(c>0 && !this.currentWikiId) this.switchWiki(f); 
-            else if(c===0) this.showJoinCreateModal(true); // Force Modal
+            else if(c===0) this.showJoinCreateModal(true); // Force Modal if no wikis
         });
     }
 
@@ -468,23 +495,10 @@ class App {
         document.getElementById('join-create-modal').classList.add('hidden');
     }
 
-    toggleSidebar(forceState) {
-        // Toggle Logic for PC and Mobile
-        const container = document.getElementById('app-container');
-        const sidebar = document.getElementById('sidebar');
-        
-        if (window.innerWidth <= 768) {
-            // Mobile: Drawer
-            const bd = document.getElementById('sidebar-backdrop');
-            const isOpening = forceState !== undefined ? forceState : !sidebar.classList.contains('open');
-            if (isOpening) { sidebar.classList.add('open'); bd.classList.add('open'); }
-            else { sidebar.classList.remove('open'); bd.classList.remove('open'); }
-        } else {
-            // PC: Side toggle
-            const isClosing = forceState !== undefined ? !forceState : !container.classList.contains('sidebar-closed');
-            if(isClosing) container.classList.add('sidebar-closed');
-            else container.classList.remove('sidebar-closed');
-        }
+    toggleSidebar(show) {
+        const sb=document.getElementById('sidebar'), bd=document.getElementById('sidebar-backdrop');
+        if(show === undefined) show = !sb.classList.contains('open'); // Toggle
+        if(show){ sb.classList.add('open'); bd.classList.add('open'); } else { sb.classList.remove('open'); bd.classList.remove('open'); }
     }
     navigateHome() { this.currentPageId=null; document.body.setAttribute('data-view','list'); document.querySelectorAll('.card').forEach(c=>c.classList.remove('active')); }
     createNewPage() { this._create(''); }
@@ -555,14 +569,9 @@ class App {
         document.body.setAttribute('data-theme',this.settings.theme);
         document.documentElement.style.setProperty('--accent-color',this.settings.accentColor);
         document.getElementById('accent-color-picker').value=this.settings.accentColor;
-        document.documentElement.style.setProperty('--mobile-cols',this.settings.mobileCols);
-        document.querySelectorAll('.col-option').forEach(e=>{
-            if(parseInt(e.dataset.val)===this.settings.mobileCols) e.classList.add('active'); else e.classList.remove('active');
-        });
     }
     saveSettings(){ if(this.uid) db.collection('users').doc(this.uid).set({settings:this.settings},{merge:true}); }
     setAccentColor(c){ this.settings.accentColor=c; this.applySettings(); }
-    setMobileCols(n){ this.settings.mobileCols=n; this.applySettings(); this.saveSettings(); }
     toggleTheme(){ this.settings.theme=this.settings.theme==='light'?'dark':'light'; this.applySettings(); this.saveSettings(); }
     
     showJoinCreateModal(forced = false){ 
@@ -653,3 +662,5 @@ window.app = new App();
 </script>
 </body>
 </html>
+
+
