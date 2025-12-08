@@ -5,9 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DokBox Teams</title>
     
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M8 20 L56 20 L50 56 L14 56 Z' fill='%23333'/><text x='32' y='50' font-family='sans-serif' font-weight='bold' font-size='28' fill='white' text-anchor='middle'>D</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='white'/><path d='M8 20 L56 20 L50 56 L14 56 Z' fill='white' stroke='%23333' stroke-width='4' stroke-linejoin='round'/><path d='M8 20 L2 8 L62 8 L56 20 Z' fill='white' stroke='%23333' stroke-width='4' stroke-linejoin='round'/><text x='32' y='52' font-family='sans-serif' font-weight='900' font-size='30' fill='%23333' text-anchor='middle'>D</text></svg>">
+    <!-- Favicon: White Box with Black Outline & 'D' -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M32 4 L4 18 L32 32 L60 18 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M4 18 L4 46 L32 60 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M60 18 L60 46 L32 60 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><text x='32' y='52' font-family='sans-serif' font-weight='900' font-size='28' fill='%23333' text-anchor='middle'>D</text></svg>">
+    
+    <!-- Apple Touch Icon (Added white background for home screen) -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='white'/><path d='M32 8 L8 20 L32 32 L56 20 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M8 20 L8 44 L32 56 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M56 20 L56 44 L32 56 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><text x='32' y='50' font-family='sans-serif' font-weight='900' font-size='26' fill='%23333' text-anchor='middle'>D</text></svg>">
 
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
@@ -15,13 +19,10 @@
     <style>
         :root {
             /* Colors */
-            --sb-bg: #f2f3f5; --sb-item: #e3e5e8; --sb-active: #333; --sb-text: #333;
+            --sb-bg: #f0f0f0; --sb-item: #e0e0e0; --sb-active: #333; --sb-text: #333;
             --bg-color: #ffffff; --card-bg: #f9f9f9; --text-main: #333333; --text-sub: #666666;
-            --border-color: #e3e5e8; --input-bg: #fff; --input-focus-bg: #fff;
-            
-            /* Accent Color (Dynamic) */
-            --accent-color: #5865F2; 
-            
+            --border-color: #ddd; --input-bg: #fff; --input-focus-bg: #fff;
+            --accent-color: #333; /* Default Accent */
             --link-color: #0066cc; --danger-color: #ff4444;
             
             /* Dimensions */
@@ -32,7 +33,7 @@
             --sb-bg: #202225; --sb-item: #2f3136; --sb-active: #40444b; --sb-text: #dcddde;
             --bg-color: #36393f; --card-bg: #2f3136; --text-main: #dcddde; --text-sub: #b9bbbe;
             --border-color: #202225; --input-bg: #40444b; --input-focus-bg: #202225;
-            /* Accent color removed here to allow JS override */
+            /* --accent-color removed to allow dynamic override */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -78,7 +79,7 @@
         .lid-right-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotateY(90deg) translateZ(40px); pointer-events: none; transform-style: preserve-3d; }
         @keyframes openLid { 0% { transform: rotateX(90deg); } 100% { transform: rotateX(-120deg); } }
         @keyframes cageSpin { 0% { transform: rotateX(-15deg) rotateY(0deg); } 100% { transform: rotateX(-15deg) rotateY(360deg); } }
-        .entrance-logo { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0) translateY(20px); font-family: 'Arial Black', sans-serif; font-size: 3rem; font-weight: 900; color: #333; text-transform: uppercase; letter-spacing: 2px; animation: logoRise 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 1s; z-index: 50; white-space: nowrap; }
+        .entrance-logo { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) scale(0) translateY(20px); font-family: 'Arial Black', sans-serif; font-size: 3rem; font-weight: 900; color: #333; letter-spacing: 2px; animation: logoRise 2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards 1s; z-index: 50; white-space: nowrap; }
         @keyframes logoRise { 0% { transform: translate(-50%, -50%) scale(0) translateY(50px); opacity: 0; } 100% { transform: translate(-50%, -180%) scale(1) translateY(0); opacity: 1; } }
         .login-form-wrap { opacity: 0; animation: fadeIn 1s forwards 2s; width: 90%; max-width: 280px; display: flex; flex-direction: column; gap: 15px; z-index: 200; }
         @keyframes fadeIn { to { opacity: 1; } }
@@ -94,7 +95,7 @@
         /* --- APP CONTAINER --- */
         #app-container {
             display: grid; width: 100vw; height: 100%;
-            grid-template-columns: 1fr; /* Sidebar is overlay */
+            grid-template-columns: var(--sidebar-width) 1fr;
             grid-template-rows: 100%;
             opacity: 0; display: none;
         }
@@ -119,10 +120,10 @@
         }
         #sidebar-backdrop.open { display: block; opacity: 1; }
 
-        .wiki-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--sb-item); color: var(--sb-text); display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; overflow: hidden; user-select: none; flex-shrink: 0; position: relative; border: 2px solid transparent; }
-        .wiki-icon:hover, .wiki-icon.active { border-radius: 16px; background: var(--accent-color); color: white; border-color: transparent; }
-        .wiki-icon.add-btn { color: var(--sb-text); border: 2px dashed #999; background: transparent; }
-        .wiki-icon.add-btn:hover { background: var(--accent-color); color: white; border-style: solid; border-color: var(--accent-color); }
+        .wiki-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--sb-item); color: var(--sb-text); display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.8rem; overflow: hidden; user-select: none; flex-shrink: 0; position: relative; }
+        .wiki-icon:hover, .wiki-icon.active { border-radius: 12px; background: var(--accent-color); color: white; }
+        .wiki-icon.add-btn { color: #333; border: 2px dashed #ccc; }
+        .wiki-icon.add-btn:hover { background: #333; color: white; border-style: solid; }
         .app-logo-sb { color: #ccc; font-weight: 900; }
         .sidebar-footer { margin-top: auto; padding-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
 
@@ -136,25 +137,25 @@
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s;
         }
         
-        /* View Switching Logic */
         body[data-view="list"] #list-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
         body[data-view="list"] #detail-column { transform: translateX(30%); opacity: 0; z-index: 0; pointer-events: none; }
+        
         body[data-view="detail"] #list-column { transform: translateX(-30%); opacity: 0; z-index: 0; pointer-events: none; }
         body[data-view="detail"] #detail-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
 
         /* Headers */
         .column-header, .detail-header { height: var(--header-height); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; gap: 10px; }
         .header-title-area { display: flex; align-items: center; gap: 10px; overflow: hidden; }
-        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 8px; border-radius: 8px; flex-shrink: 0; }
-        .menu-btn:hover { background: var(--input-bg); }
         .header-title { font-weight: 800; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
         .wiki-edit-btn { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--text-sub); border-radius: 4px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
         .wiki-edit-btn:hover { background: var(--input-bg); color: var(--accent-color); }
+        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 5px; border-radius: 50%; flex-shrink: 0; }
+        .menu-btn:hover { background: var(--input-bg); }
         
         /* List View Items */
         .search-area { padding: 15px 20px; background: var(--bg-color); flex-shrink: 0; width: 100%; display: flex; justify-content: center; }
         .search-input { width: 100%; max-width: 800px; padding: 10px 15px 10px 35px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2); }
+        .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-sub); pointer-events: none; }
         
         #list-scroll { flex-grow: 1; overflow-y: auto; padding: 0 20px 40px 20px; -webkit-overflow-scrolling: touch; width: 100%; display: flex; flex-direction: column; align-items: center; }
@@ -190,7 +191,7 @@
         .hidden { display: none !important; }
         .controls-area { display: flex; align-items: center; gap: 10px; }
         .btn-circle { width: 40px; height: 40px; border-radius: 50%; border: none; background: var(--accent-color); color: white; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; transition: transform 0.2s; flex-shrink: 0; }
-        .btn-circle:hover { transform: scale(1.1); }
+        .btn-circle:hover { transform: scale(1.1); background: #000; }
         .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-sub); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .btn-icon:hover { background: var(--input-bg); color: var(--text-main); }
         .btn-icon.danger { color: #ff6b6b; }
@@ -211,6 +212,9 @@
         .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
         #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
+        .col-options { display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 6px; }
+        .col-option { flex: 1; text-align: center; padding: 8px 0; font-size: 0.9rem; cursor: pointer; border-radius: 4px; color: var(--text-sub); white-space: nowrap; }
+        .col-option.active { background: var(--card-bg); color: var(--accent-color); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
         
         @media (max-width: 768px) {
@@ -384,6 +388,7 @@ class Auth {
             // Reset Layout
             app.navigateHome();
             document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebar-backdrop').classList.remove('open');
         }); 
     }
 }
@@ -453,11 +458,8 @@ class App {
         });
         document.getElementById('search-input').addEventListener('input', e=>this.renderList(e.target.value));
         document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) document.getElementById('settings-popover').classList.add('hidden'); });
-        
-        // Color Picker Fix
-        const cp = document.getElementById('accent-color-picker');
-        cp.addEventListener('input', (e)=>this.setAccentColor(e.target.value));
-        cp.addEventListener('change', ()=>this.saveSettings());
+        document.getElementById('accent-color-picker').addEventListener('input', (e)=>this.setAccentColor(e.target.value));
+        document.getElementById('accent-color-picker').addEventListener('change', ()=>this.saveSettings());
     }
 
     async init(uid, displayId) {
