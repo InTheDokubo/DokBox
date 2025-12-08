@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DokBox Teams</title>
     
-    <!-- アイコン設定: 同じフォルダにある image.png を読み込みます -->
+    <!-- Favicon: White Box with Black Outline & 'D' -->
     <link rel="icon" href="image.png" type="image/png">
     <link rel="apple-touch-icon" href="image.png">
 
@@ -31,11 +31,21 @@
             --sb-bg: #202225; --sb-item: #2f3136; --sb-active: #40444b; --sb-text: #dcddde;
             --bg-color: #36393f; --card-bg: #2f3136; --text-main: #dcddde; --text-sub: #b9bbbe;
             --border-color: #202225; --input-bg: #40444b; --input-focus-bg: #202225;
-            /* --accent-color removed to allow dynamic override */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: "M PLUS Rounded 1c", sans-serif; background: var(--bg-color); color: var(--text-main); transition: background 0.3s, color 0.3s; }
+
+        /* --- iOS SCROLL FIX (Critical Update) --- */
+        html, body {
+            height: 100%; width: 100%;
+            margin: 0; padding: 0;
+            overflow: hidden; /* Disable default scroll */
+            position: fixed; /* Force fix layout on iOS */
+            overscroll-behavior: none; /* Prevent bounce */
+            font-family: "M PLUS Rounded 1c", sans-serif;
+            background: var(--bg-color); color: var(--text-main);
+            transition: background 0.3s, color 0.3s;
+        }
 
         /* --- LOADING --- */
         #loading-overlay {
@@ -61,6 +71,8 @@
             background: #ffffff; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.5s ease, visibility 0.5s;
+            /* Allow internal scroll if content overflows vertically on small screens, but prevent body bounce */
+            overflow-y: auto; overscroll-behavior: contain;
         }
         #login-screen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
 
@@ -93,17 +105,19 @@
         /* --- APP CONTAINER --- */
         #app-container {
             display: grid; width: 100vw; height: 100%;
-            grid-template-columns: 1fr; /* Sidebar is overlay */
+            grid-template-columns: 1fr; /* Sidebar is overlay on mobile */
             grid-template-rows: 100%;
             opacity: 0; display: none;
         }
         #app-container.visible { opacity: 1; display: block; }
-
+        
         /* Sidebar (Drawer) */
         #sidebar {
             position: fixed; top: 0; left: 0; height: 100%; width: var(--sidebar-width);
             background: var(--sb-bg); display: flex; flex-direction: column; align-items: center; 
-            padding-top: 15px; gap: 12px; overflow-y: auto; z-index: 3000;
+            padding-top: 15px; gap: 12px; 
+            overflow-y: auto; overscroll-behavior: contain; /* Safe internal scroll */
+            z-index: 3000;
             border-right: 1px solid rgba(0,0,0,0.1);
             transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: 4px 0 15px rgba(0,0,0,0.15);
@@ -126,7 +140,7 @@
         .sidebar-footer { margin-top: auto; padding-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
 
         /* Main Content */
-        #main-content { position: relative; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-color); width: 100%; height: 100%; }
+        #main-content { position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg-color); }
 
         #list-column, #detail-column {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -144,11 +158,11 @@
         /* Headers */
         .column-header, .detail-header { height: var(--header-height); padding: 0 20px; display: flex; align-items: center; justify-content: space-between; background: var(--card-bg); border-bottom: 1px solid var(--border-color); flex-shrink: 0; gap: 10px; }
         .header-title-area { display: flex; align-items: center; gap: 10px; overflow: hidden; }
-        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 8px; border-radius: 8px; flex-shrink: 0; }
-        .menu-btn:hover { background: var(--input-bg); }
         .header-title { font-weight: 800; font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: default; }
         .wiki-edit-btn { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; color: var(--text-sub); border-radius: 4px; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
         .wiki-edit-btn:hover { background: var(--input-bg); color: var(--accent-color); }
+        .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 5px; border-radius: 50%; flex-shrink: 0; }
+        .menu-btn:hover { background: var(--input-bg); }
         
         /* List View Items */
         .search-area { padding: 15px 20px; background: var(--bg-color); flex-shrink: 0; width: 100%; display: flex; justify-content: center; }
@@ -156,7 +170,17 @@
         .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(0,0,0,0.1); }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-sub); pointer-events: none; }
         
-        #list-scroll { flex-grow: 1; overflow-y: auto; padding: 0 20px 40px 20px; -webkit-overflow-scrolling: touch; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        /* SCROLL AREAS (Internal Scroll) */
+        #list-scroll { 
+            flex-grow: 1; overflow-y: auto; padding: 0 20px 40px 20px; 
+            -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+            width: 100%; display: flex; flex-direction: column; align-items: center; 
+        }
+        .editor-scroll { 
+            flex-grow: 1; overflow-y: auto; padding: 0; 
+            -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+        }
+
         .card-grid { display: grid; gap: 10px; grid-template-columns: repeat(6, 1fr); width: 100%; max-width: 1200px; }
         .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; overflow: hidden; transition: all 0.2s; border: 2px solid transparent; position: relative; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-color); }
@@ -169,7 +193,6 @@
         /* Detail View Items */
         .back-btn { display: flex; align-items: center; gap: 5px; color: var(--accent-color); font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: background 0.2s; }
         .back-btn:hover { background: var(--input-bg); }
-        .editor-scroll { flex-grow: 1; overflow-y: auto; padding: 0; -webkit-overflow-scrolling: touch; }
         .editor-wrapper { max-width: 900px; margin: 0 auto; min-height: 100%; background: var(--card-bg); padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
         input.title-input { width: 100%; font-size: 2rem; font-weight: 800; border: none; outline: none; background: transparent; color: var(--text-main); margin-bottom: 20px; padding: 0; line-height: 1.3; }
         #hybrid-editor { display: flex; flex-direction: column; gap: 8px; font-size: 1.1rem; line-height: 1.8; color: var(--text-main); font-family: monospace; outline: none; padding-bottom: 150px; }
@@ -215,7 +238,20 @@
         .col-option.active { background: var(--card-bg); color: var(--accent-color); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
         
+        /* Desktop Layout (Default 3-Column is now handled by single view switch as requested in previous prompt, but Grid is kept for layout structure if needed) */
+        @media (min-width: 769px) {
+            #app-container {
+                grid-template-columns: var(--sidebar-width) 1fr; /* Single Main Column */
+            }
+        }
+        
+        /* Mobile Layout */
         @media (max-width: 768px) {
+            #app-container { display: block; position: relative; } /* Mobile sidebar handling */
+            #sidebar { position: fixed; transform: translateX(-100%); transition: transform 0.3s; box-shadow: 4px 0 15px rgba(0,0,0,0.3); border-right: none; }
+            #sidebar.open { transform: translateX(0); }
+            #sidebar-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2900; opacity: 0; transition: opacity 0.3s; }
+            #sidebar-backdrop.open { display: block; opacity: 1; }
             .card-grid { grid-template-columns: repeat(2, 1fr); }
             .editor-wrapper { padding: 20px; }
             input.title-input { font-size: 1.8rem; margin-bottom: 20px; }
