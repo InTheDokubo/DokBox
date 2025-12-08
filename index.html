@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DokBox Teams</title>
     
-    <!-- Favicon: White Box with Black Outline & 'D' -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M32 4 L4 18 L32 32 L60 18 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M4 18 L4 46 L32 60 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M60 18 L60 46 L32 60 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><text x='32' y='52' font-family='sans-serif' font-weight='900' font-size='28' fill='%23333' text-anchor='middle'>D</text></svg>">
-    
-    <!-- Apple Touch Icon (Added white background for home screen) -->
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='white'/><path d='M32 8 L8 20 L32 32 L56 20 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M8 20 L8 44 L32 56 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><path d='M56 20 L56 44 L32 56 L32 32 Z' fill='white' stroke='%23333' stroke-width='3' stroke-linejoin='round'/><text x='32' y='50' font-family='sans-serif' font-weight='900' font-size='26' fill='%23333' text-anchor='middle'>D</text></svg>">
+    <!-- アイコン設定: 同じフォルダにある image.png を読み込みます -->
+    <link rel="icon" href="image.png" type="image/png">
+    <link rel="apple-touch-icon" href="image.png">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
@@ -95,7 +93,7 @@
         /* --- APP CONTAINER --- */
         #app-container {
             display: grid; width: 100vw; height: 100%;
-            grid-template-columns: var(--sidebar-width) 1fr;
+            grid-template-columns: 1fr; /* Sidebar is overlay */
             grid-template-rows: 100%;
             opacity: 0; display: none;
         }
@@ -344,12 +342,8 @@ class Auth {
                 document.getElementById('login-screen').classList.add('fade-out');
                 setTimeout(() => {
                     document.getElementById('app-container').classList.add('visible');
-                    // Reset grid layout just in case
-                    if(window.innerWidth > 768) {
-                        document.getElementById('app-container').style.display = 'grid';
-                    } else {
-                        document.getElementById('app-container').style.display = 'block';
-                    }
+                    // Reset grid layout
+                    document.getElementById('app-container').style.display = 'grid';
                 }, 500);
                 this.app.init(user.uid, user.email.split('@')[0]); 
             } else { 
@@ -458,8 +452,11 @@ class App {
         });
         document.getElementById('search-input').addEventListener('input', e=>this.renderList(e.target.value));
         document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) document.getElementById('settings-popover').classList.add('hidden'); });
-        document.getElementById('accent-color-picker').addEventListener('input', (e)=>this.setAccentColor(e.target.value));
-        document.getElementById('accent-color-picker').addEventListener('change', ()=>this.saveSettings());
+        
+        // Color Picker Fix: Use input event for real-time update
+        const cp = document.getElementById('accent-color-picker');
+        cp.addEventListener('input', (e)=>this.setAccentColor(e.target.value));
+        cp.addEventListener('change', ()=>this.saveSettings());
     }
 
     async init(uid, displayId) {
@@ -568,7 +565,7 @@ class App {
     
     toggleSettings(){ document.getElementById('settings-popover').classList.toggle('hidden'); }
     applySettings(){
-        document.body.setAttribute('data-theme',this.settings.theme);
+        document.documentElement.setAttribute('data-theme',this.settings.theme); // Apply to HTML tag for CSS var inheritance
         document.documentElement.style.setProperty('--accent-color',this.settings.accentColor);
         document.getElementById('accent-color-picker').value=this.settings.accentColor;
     }
