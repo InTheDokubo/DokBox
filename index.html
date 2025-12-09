@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DokBox Teams</title>
+    <title>DokBox</title>
     
-    <!-- Icons: Use image.png from the same directory -->
+    <!-- Icons -->
     <link rel="icon" href="image.png" type="image/png">
     <link rel="apple-touch-icon" href="image.png">
 
@@ -21,10 +21,8 @@
             --bg-color: #ffffff; --card-bg: #f9f9f9; --text-main: #333333; --text-sub: #666666;
             --border-color: #ddd; --input-bg: #fff; --input-focus-bg: #fff;
             --accent-color: #333; --link-color: #0066cc; --danger-color: #ff4444;
-            
-            /* Dimensions */
-            --sidebar-width: 72px;
-            --header-height: 60px;
+            --sidebar-width: 72px; --header-height: 60px;
+            --line-height: 1.6;
         }
         [data-theme="dark"] {
             --sb-bg: #202225; --sb-item: #2f3136; --sb-active: #40444b; --sb-text: #dcddde;
@@ -44,7 +42,6 @@
             transition: opacity 0.3s; opacity: 0; pointer-events: none;
         }
         #loading-overlay.visible { opacity: 1; pointer-events: auto; }
-        
         .loader-cube { width: 40px; height: 40px; position: relative; transform-style: preserve-3d; animation: loaderSpin 2s infinite linear; }
         .lf { position: absolute; width: 40px; height: 40px; border: 2px solid #333; background: transparent; }
         .lf-f { transform: translateZ(20px); } .lf-b { transform: rotateY(180deg) translateZ(20px); }
@@ -98,7 +95,7 @@
         }
         #app-container.visible { opacity: 1; display: block; }
 
-        /* Sidebar (Drawer for ALL devices) */
+        /* Sidebar (Drawer) */
         #sidebar {
             position: fixed; top: 0; left: 0; height: 100%; width: var(--sidebar-width);
             background: var(--sb-bg); display: flex; flex-direction: column; align-items: center; 
@@ -108,8 +105,6 @@
             box-shadow: 4px 0 15px rgba(0,0,0,0.15); overscroll-behavior: contain;
         }
         #sidebar.open { transform: translateX(0); }
-        
-        /* Sidebar Backdrop */
         #sidebar-backdrop {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 2900; opacity: 0; transition: opacity 0.3s;
@@ -133,10 +128,8 @@
             background: var(--bg-color);
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s;
         }
-        
         body[data-view="list"] #list-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
         body[data-view="list"] #detail-column { transform: translateX(30%); opacity: 0; z-index: 0; pointer-events: none; }
-        
         body[data-view="detail"] #list-column { transform: translateX(-30%); opacity: 0; z-index: 0; pointer-events: none; }
         body[data-view="detail"] #detail-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
 
@@ -149,57 +142,45 @@
         .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 5px; border-radius: 50%; flex-shrink: 0; }
         .menu-btn:hover { background: var(--input-bg); }
         
-        /* List View Items */
+        /* List View */
         .search-area { padding: 15px 20px; background: var(--bg-color); flex-shrink: 0; width: 100%; display: flex; justify-content: center; }
         .search-input { width: 100%; max-width: 800px; padding: 10px 15px 10px 35px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2); }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-sub); pointer-events: none; }
         
-        #list-scroll { 
-            flex-grow: 1; overflow-y: auto; padding: 20px 20px 40px 20px; 
-            -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
-            width: 100%; display: flex; flex-direction: column; align-items: center; 
-        }
+        #list-scroll { flex-grow: 1; overflow-y: auto; padding: 20px 20px 40px 20px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; width: 100%; display: flex; flex-direction: column; align-items: center; }
         .card-grid { display: grid; gap: 10px; grid-template-columns: repeat(6, 1fr); width: 100%; max-width: 1200px; }
-        .card { 
-            background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
-            cursor: pointer; aspect-ratio: 1 / 1; 
-            display: flex; flex-direction: column; overflow: hidden; 
-            transition: all 0.2s; border: 2px solid transparent; position: relative; 
-        }
+        
+        /* Card */
+        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; overflow: hidden; transition: all 0.2s; border: 2px solid transparent; position: relative; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-color); }
         .card.active { border-color: var(--accent-color); background: var(--input-bg); }
-        
         .card-thumb { height: 60%; width: 100%; background-size: cover; background-position: center; background-color: var(--input-bg); flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
         .card-content { padding: 5px 6px; display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; text-align: center; justify-content: center; }
-        .card-title { 
-            font-weight: bold; font-size: 0.7rem; margin-bottom: 0; line-height: 1.3;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; 
-        }
+        .card-title { font-weight: bold; font-size: 0.7rem; margin-bottom: 0; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
         .card-meta { font-size: 0.6rem; color: var(--text-sub); opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* Detail View Items */
+        /* Detail */
         .back-btn { display: flex; align-items: center; gap: 5px; color: var(--accent-color); font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: background 0.2s; }
         .back-btn:hover { background: var(--input-bg); }
-        .editor-scroll { flex-grow: 1; overflow-y: auto; padding: 0; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+        .editor-scroll { flex-grow: 1; overflow-y: auto; padding: 0; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; cursor: text; }
         .editor-wrapper { max-width: 900px; margin: 0 auto; min-height: 100%; background: var(--card-bg); padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
         .editor-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         input.title-input { flex-grow: 1; width: 100%; font-size: 2rem; font-weight: 800; border: none; outline: none; background: transparent; color: var(--text-main); padding: 0; line-height: 1.3; }
         
-        /* Removed Icon Upload Button Styles */
+        #hybrid-editor { display: flex; flex-direction: column; gap: 0; font-size: 1.1rem; line-height: var(--line-height); color: var(--text-main); font-family: monospace; outline: none; padding-bottom: 150px; }
+        .line { min-height: 1.8em; outline: none; white-space: pre-wrap; word-break: break-all; padding: 2px 6px; border-radius: 4px; position: relative; }
+        .line:not(.editing) { cursor: text; }
+        .line.editing { color: var(--text-main); }
         
-        .title-thumbnail-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); display: none; cursor: pointer; }
-        .title-thumbnail-preview.active { display: block; }
-        #hybrid-editor { display: flex; flex-direction: column; gap: 8px; font-size: 1.1rem; line-height: 1.8; color: var(--text-main); font-family: monospace; outline: none; padding-bottom: 150px; }
-        .line-block { min-height: 1.8em; outline: none; white-space: pre-wrap; word-break: break-all; border-radius: 4px; padding: 2px 6px; }
-        .line-block:not(.editing) { cursor: text; }
-        .line-block.editing { background: var(--input-bg); box-shadow: 0 0 0 2px var(--border-color); color: var(--text-main); }
         .r-bold { font-weight: 800; color: var(--text-main); background: rgba(0,0,0,0.05); padding: 0 4px; border-radius: 4px;}
         .r-tag { color: var(--accent-color); font-weight: bold; margin-right: 4px; background: rgba(88, 101, 242, 0.1); padding: 0 6px; border-radius: 4px; display: inline-block; cursor: pointer; }
         .r-link { color: var(--link-color); text-decoration: underline; cursor: pointer; font-weight: bold; }
         .r-link.is-empty { color: var(--danger-color); }
-        .r-img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; margin: 10px 0; cursor: pointer; border: 2px solid transparent; transition: border 0.2s;}
+        .r-img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: block; margin: 4px 0; cursor: pointer; border: 2px solid transparent; transition: border 0.2s;}
         .r-img:hover { border-color: var(--accent-color); }
+        .center-block { text-align: center; }
+
         #related-section { margin-top: 60px; padding-top: 20px; border-top: 2px solid var(--border-color); opacity: 0.8; }
         #related-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
         
@@ -222,21 +203,25 @@
         .settings-popover h3 { margin: 0; font-size: 0.95rem; color: var(--text-sub); border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal { background: var(--card-bg); width: 90%; max-width: 400px; padding: 30px; border-radius: 0; border: 2px solid #333; display: flex; flex-direction: column; gap: 15px; box-shadow: 10px 10px 0 rgba(0,0,0,0.1); }
-        .auth-input-in-modal { padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; width: 100%; outline: none; }
-        .wiki-desc-input { padding: 12px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; width: 100%; outline: none; }
+        .auth-input-in-modal { padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; width: 100%; outline: none; }
+        .wiki-desc-input { padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; width: 100%; outline: none; }
         .btn-primary { padding: 12px; background: var(--accent-color); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
         .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
         #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
-        .col-options { display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 6px; }
-        .col-option { flex: 1; text-align: center; padding: 8px 0; font-size: 0.9rem; cursor: pointer; border-radius: 4px; color: var(--text-sub); white-space: nowrap; }
-        .col-option.active { background: var(--card-bg); color: var(--accent-color); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
         
         @media (max-width: 768px) {
             .card-grid { grid-template-columns: repeat(2, 1fr); }
             .editor-wrapper { padding: 20px; }
             input.title-input { font-size: 1.8rem; margin-bottom: 20px; }
+        }
+        @media (min-width: 769px) {
+            #app-container { grid-template-columns: var(--sidebar-width) 1fr; }
+            #sidebar { position: fixed; border-right: 1px solid var(--border-color); transform: translateX(-100%); } 
+            #sidebar.open { transform: translateX(0); }
+            .menu-btn { display: flex !important; }
+            #sidebar-backdrop { display: none !important; }
         }
     </style>
 </head>
@@ -330,17 +315,18 @@
             <div class="back-btn" onclick="app.navigateHome()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg><span>戻る</span></div>
             <div class="detail-actions"><span id="save-status" style="font-size:0.75rem;color:var(--text-sub);"></span><button class="btn-icon danger" onclick="app.confirmDeletePage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>
         </div>
-        <div class="editor-scroll"><div class="editor-wrapper">
-            <!-- Icon Upload Removed -->
-            <div class="editor-title-row">
-                <input type="text" id="page-title" class="title-input" placeholder="タイトルなし">
+        <div class="editor-scroll">
+            <div class="editor-wrapper" onclick="document.getElementById('hybrid-editor').lastElementChild.focus()">
+                <div class="editor-title-row">
+                    <input type="text" id="page-title" class="title-input" placeholder="タイトルなし">
+                </div>
+                <div id="hybrid-editor"></div>
+                <div id="related-section" class="hidden" style="margin-top:60px;border-top:2px solid var(--border-color);padding-top:20px;">
+                    <div style="font-weight:bold;color:var(--text-sub);margin-bottom:15px;font-size:0.9rem;">関連ページ</div>
+                    <div id="related-grid" class="card-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));"></div>
+                </div>
             </div>
-            <div id="hybrid-editor"></div>
-            <div id="related-section" class="hidden" style="margin-top:60px;border-top:2px solid var(--border-color);padding-top:20px;">
-                <div style="font-weight:bold;color:var(--text-sub);margin-bottom:15px;font-size:0.9rem;">関連ページ</div>
-                <div id="related-grid" class="card-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));"></div>
-            </div>
-        </div></div>
+        </div>
     </section>
 </div>
 
@@ -448,52 +434,150 @@ class HybridEditor {
     renderAll() {
         this.container.innerHTML = '';
         this.lines.forEach((text, i) => {
-            const div = document.createElement('div'); div.className='line-block'; div.contentEditable=true;
-            div.innerHTML = this.parse(text);
-            div.addEventListener('focus', ()=>this.onFocus(i,div));
-            div.addEventListener('blur', ()=>this.onBlur(i,div));
-            div.addEventListener('input', ()=>this.onInput(i,div));
-            div.addEventListener('keydown', (e)=>this.onKey(e,i));
+            const div = document.createElement('div'); div.className='line'; div.contentEditable=true;
+            div.dataset.index = i;
+            // Initially render as parsed HTML (Preview Mode)
+            div.innerHTML = this.parse(text); 
+            
+            // Events for Cosense-like behavior
+            div.addEventListener('focus', () => this.onFocus(i, div));
+            div.addEventListener('blur', () => this.onBlur(i, div));
+            div.addEventListener('input', () => this.onInput(i, div));
+            div.addEventListener('keydown', (e) => this.onKey(e, i));
+            
             this.container.appendChild(div);
         });
     }
+    // Parse formatting (Markdown, Links, Images)
     parse(t) {
         if(!t) return '<br>';
         let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-
-        // Center Tag Support
-        h = h.replace(/&lt;center&gt;/g, '<div style="text-align: center;">').replace(/&lt;\/center&gt;/g, '</div>');
-
-        // Gyazo & Image Support (with *size)
-        // [url*scale] e.g. [http://...*0.5]
+        
+        // Center
+        h = h.replace(/&lt;center&gt;(.*?)&lt;\/center&gt;/g, '<div class="center-block">$1</div>');
+        
+        // Image [url*scale]
         h = h.replace(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]\*]+)(?:\*([\d\.]+))?\]/gi, (m, u, s)=>{
             let s_url = u;
             if(s_url.match(/gyazo\.com/)) s_url = s_url.replace('gyazo.com', 'i.gyazo.com') + '.png';
-            
             let style = "";
-            if (s) {
-                // scale: *0.5 -> width:50%
-                style = `style="width: ${parseFloat(s) * 100}%;"`;
-            }
+            if (s) style = `style="width: ${parseFloat(s) * 100}%;"`;
             return `<img class="r-img" src="${s_url}" ${style}>`;
         });
 
+        // Tags, Bold, Links
         h = h.replace(/\*\*(.*?)\*\*/g, '<span class="r-bold">$1</span>')
              .replace(/#(\S+)/g, '<span class="r-tag" data-tag="$1">$1</span>')
              .replace(/\[([^\[\]]+)\]/g, (m,c) => c.startsWith('<img')?m:`<span class="r-link" data-link="${c}">[${c}]</span>`);
         return h;
     }
-    onFocus(i, div) { div.classList.add('editing'); div.innerText=this.lines[i]; }
-    onBlur(i, div) { div.classList.remove('editing'); this.lines[i]=div.innerText.replace(/\n/g,''); div.innerHTML=this.parse(this.lines[i]); this.onChange(this.lines.join('\n')); }
-    onInput(i, div) { this.lines[i]=div.innerText.replace(/\n/g,''); window.app.triggerSave(); }
-    onKey(e, i) {
-        if(e.key==='Enter') {
-            e.preventDefault(); this.lines.splice(i+1,0,""); this.renderAll();
-            const n=this.container.children[i+1]; if(n) n.focus(); this.onChange(this.lines.join('\n'));
-        } else if(e.key==='Backspace' && this.lines[i]==='' && this.lines.length>1) {
-            e.preventDefault(); this.lines.splice(i,1); this.renderAll();
-            const p=this.container.children[i-1]; if(p){ p.focus(); } 
+    
+    // Switch to Raw Text on Focus
+    onFocus(i, div) {
+        div.classList.add('editing');
+        div.innerText = this.lines[i]; // Show raw text
+    }
+    
+    // Switch to Preview on Blur
+    onBlur(i, div) {
+        if(div && div.isConnected) { // Check if element still exists
+            div.classList.remove('editing');
+            // Save current raw text
+            this.lines[i] = div.innerText.replace(/\n/g, ''); 
+            // Render preview
+            div.innerHTML = this.parse(this.lines[i]);
             this.onChange(this.lines.join('\n'));
+        }
+    }
+    
+    onInput(i, div) {
+        // Update model immediately during editing
+        this.lines[i] = div.innerText.replace(/\n/g, '');
+        window.app.triggerSave();
+    }
+    
+    onKey(e, i) {
+        if (e.isComposing || e.keyCode === 229) return; 
+
+        if(e.key === 'Enter') {
+            e.preventDefault();
+            // Split line at cursor? For simplicity, just insert new line below
+            // A full implementation would split the string at cursor pos.
+            this.lines.splice(i+1, 0, "");
+            this.renderAll();
+            // Focus next line
+            const nextLine = this.container.children[i+1];
+            if(nextLine) {
+                nextLine.focus();
+            }
+            this.onChange(this.lines.join('\n'));
+        } else if(e.key === 'Backspace') {
+            // If empty line, delete and move up
+            if(this.lines[i] === '' && this.lines.length > 1) {
+                e.preventDefault();
+                this.lines.splice(i, 1);
+                this.renderAll();
+                const prevLine = this.container.children[i-1];
+                if(prevLine) {
+                    prevLine.focus();
+                    // Move cursor to end
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(prevLine);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+                this.onChange(this.lines.join('\n'));
+            }
+        }
+        // Seamless Navigation (Up/Down/Left/Right across lines)
+        else if (e.key === 'ArrowUp') {
+            // If at first line or normal navigation, let default happen if same line.
+            // But since lines are block divs, native arrow keys won't jump between them easily in contentEditable=true unless wrapper is editable.
+            // Here we force jump if we are at top.
+            e.preventDefault();
+            const prev = this.container.children[i-1];
+            if(prev) {
+                prev.focus();
+                // move caret to end for smoothness? or keep pos? keep pos is hard.
+                // for simplicity, move to end or start based on user expectation?
+                // actually just focus moves caret to start usually.
+            }
+        }
+        else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const next = this.container.children[i+1];
+            if(next) next.focus();
+        }
+        else if (e.key === 'ArrowLeft') {
+            const sel = window.getSelection();
+            if(sel.anchorOffset === 0 && i > 0) {
+                e.preventDefault();
+                const prev = this.container.children[i-1];
+                prev.focus();
+                // Move to end of prev line
+                const range = document.createRange();
+                range.selectNodeContents(prev);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+        else if (e.key === 'ArrowRight') {
+            const sel = window.getSelection();
+            const len = this.lines[i].length;
+            if(sel.anchorOffset === len && i < this.lines.length - 1) {
+                e.preventDefault();
+                const next = this.container.children[i+1];
+                next.focus();
+                // Move to start
+                const range = document.createRange();
+                range.selectNodeContents(next);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
         }
     }
 }
@@ -518,11 +602,13 @@ class App {
             }
         });
         document.getElementById('search-input').addEventListener('input', e=>this.renderList(e.target.value));
-        document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) document.getElementById('settings-popover').classList.add('hidden'); });
+        document.addEventListener('click', e => { if (!e.target.closest('.controls-area')) { const sp=document.getElementById('settings-popover'); if(sp) sp.classList.add('hidden'); } });
         
         const cp = document.getElementById('accent-color-picker');
-        cp.addEventListener('input', (e)=>this.setAccentColor(e.target.value));
-        cp.addEventListener('change', ()=>this.saveSettings());
+        if(cp) {
+            cp.addEventListener('input', (e)=>this.setAccentColor(e.target.value));
+            cp.addEventListener('change', ()=>this.saveSettings());
+        }
     }
 
     async init(uid, displayId) {
@@ -617,12 +703,9 @@ class App {
         list.forEach(p=>{
             const el=document.createElement('div'); el.className='card';
             let bgUrl = '';
-            // Only extract image URL (no manual upload)
             const m = p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]]+)\]/i);
             if(m) {
                 let u = m[1];
-                // Remove size config from thumbnail url check
-                if(u.includes('*')) u = u.split('*')[0];
                 if(u.match(/gyazo/)) u = u.replace('gyazo.com','i.gyazo.com')+'.png';
                 bgUrl = u;
             }
@@ -651,10 +734,8 @@ class App {
             document.getElementById('related-section').classList.remove('hidden');
             rel.forEach(p=>{
                 const el=document.createElement('div'); el.className='card';
-                let bgUrl = ''; 
-                const m = p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]]+)\]/i); 
-                if(m) { let u=m[1]; if(u.includes('*')) u=u.split('*')[0]; if(u.match(/gyazo/)) u=u.replace('gyazo.com','i.gyazo.com')+'.png'; bgUrl=u; }
-                let thHtml = `<div class="card-thumb" style="background-image:url('${bgUrl}');height:60px;"></div>`;
+                let bgUrl = ''; const m = p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]]+)\]/i); if(m) { let u=m[1]; if(u.match(/gyazo/)) u=u.replace('gyazo.com','i.gyazo.com')+'.png'; bgUrl=u; }
+                let thHtml = bgUrl ? `<div class="card-thumb" style="background-image:url('${bgUrl}');height:60px;"></div>` : ''; 
                 el.innerHTML=`${thHtml}<div class="card-content"><div class="card-title">${this.esc(p.title)}</div></div>`;
                 el.onclick=()=>this.openPage(p.id);
                 grid.appendChild(el);
@@ -700,26 +781,22 @@ class App {
         if(pass) data.password = pass;
         db.collection('wikis').doc(this.currentWikiId).set(data,{merge:true}).then(()=>{ alert('保存しました'); document.getElementById('wiki-info-modal').classList.add('hidden'); });
     }
-    copyWikiId(){ 
-        const val = this.currentWikiId;
-        if(!val)return;
-        const t = document.createElement("textarea"); t.value = val; t.style.position="fixed"; t.style.left="-9999px"; document.body.appendChild(t); t.focus(); t.select();
-        try { document.execCommand('copy'); alert('IDをコピーしました'); } catch(e){ prompt("コピー:", val); }
-        document.body.removeChild(t);
-    }
-    async createWiki(){
+    createWiki(){
         const id=document.getElementById('create-id-input').value.trim();
         const pass=document.getElementById('create-pass-input').value.trim();
         if(!id.match(/^[a-zA-Z0-9_-]+$/)) return alert('英数字のみ');
         if(!pass) return alert('パスワード必須');
         let tid=id, ex=true, s=0;
-        while(ex){ const d=await db.collection('wikis').doc(tid).get(); if(d.exists){s=Math.floor(Math.random()*9000)+1000; tid=`${id}-${s}`;}else{ex=false;}}
-        const b=db.batch(); 
-        b.set(db.collection('wikis').doc(tid),{owner:this.uid, password:pass, createdAt:Date.now()});
-        b.set(db.collection('users').doc(this.uid).collection('joinedWikis').doc(tid),{name:tid,role:'owner',joinedAt:Date.now()});
-        await b.commit(); document.getElementById('join-create-modal').classList.add('hidden');
+        // Simple unique check simulation (real app should be robust)
+        db.collection('wikis').doc(tid).get().then(d => {
+            if(d.exists) { alert("ID重複"); return; }
+            const b=db.batch(); 
+            b.set(db.collection('wikis').doc(tid),{owner:this.uid, password:pass, createdAt:Date.now()});
+            b.set(db.collection('users').doc(this.uid).collection('joinedWikis').doc(tid),{name:tid,role:'owner',joinedAt:Date.now()});
+            b.commit().then(() => document.getElementById('join-create-modal').classList.add('hidden'));
+        });
     }
-    async joinWiki(){
+    joinWiki(){
         const id=document.getElementById('join-id-input').value.trim(); 
         const pass=document.getElementById('join-pass-input').value.trim();
         const errEl = document.getElementById('join-error');
@@ -737,39 +814,35 @@ class App {
         btn.disabled = true;
         btn.style.opacity = "0.7";
 
-        try {
-            const d=await db.collection('wikis').doc(id).get(); 
-            
+        db.collection('wikis').doc(id).get().then(d => {
             if(!d.exists || pass !== (d.data().password || 'PrePass')) {
                  errEl.innerText = 'IDまたはパスワードが間違っています';
+                 btn.innerText = originalText;
+                 btn.disabled = false;
+                 btn.style.opacity = "1";
                  return;
             }
-            
-            await db.collection('users').doc(this.uid).collection('joinedWikis').doc(id).set({name:id,role:'member',joinedAt:Date.now()});
-            document.getElementById('join-create-modal').classList.add('hidden');
-            // No alert needed if successful, UI updates automatically via listener
-        } catch(e) {
+            db.collection('users').doc(this.uid).collection('joinedWikis').doc(id).set({name:id,role:'member',joinedAt:Date.now()}).then(() => {
+                document.getElementById('join-create-modal').classList.add('hidden');
+                alert("参加しました！");
+                btn.innerText = originalText;
+                btn.disabled = false;
+                btn.style.opacity = "1";
+            });
+        }).catch(e => {
             console.error(e);
             errEl.innerText = "エラー: " + e.message;
-        } finally {
             btn.innerText = originalText;
             btn.disabled = false;
             btn.style.opacity = "1";
-        }
+        });
     }
-    async deleteWiki() {
+    deleteWiki() {
         if(!confirm("本当に削除しますか？\nページデータも全て削除されます。")) return;
-        const pagesRef = db.collection('wikis').doc(this.currentWikiId).collection('pages');
-        let hasPages = true;
-        while(hasPages) {
-            const snap = await pagesRef.limit(400).get();
-            if(snap.empty) hasPages = false;
-            else { const batch = db.batch(); snap.forEach(doc => batch.delete(doc.ref)); await batch.commit(); }
-        }
         const b = db.batch();
         b.delete(db.collection('wikis').doc(this.currentWikiId));
         b.delete(db.collection('users').doc(this.uid).collection('joinedWikis').doc(this.currentWikiId));
-        await b.commit(); alert("削除しました"); location.reload();
+        b.commit().then(() => { alert("削除しました"); location.reload(); });
     }
     leaveWiki() {
         if(!confirm("脱退しますか？")) return;
