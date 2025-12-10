@@ -225,15 +225,19 @@
         .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
         #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
-        .col-options { display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 6px; }
-        .col-option { flex: 1; text-align: center; padding: 8px 0; font-size: 0.9rem; cursor: pointer; border-radius: 4px; color: var(--text-sub); white-space: nowrap; }
-        .col-option.active { background: var(--card-bg); color: var(--accent-color); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
         
         @media (max-width: 768px) {
             .card-grid { grid-template-columns: repeat(2, 1fr); }
             .editor-wrapper { padding: 20px; }
             input.title-input { font-size: 1.8rem; margin-bottom: 20px; }
+        }
+        @media (min-width: 769px) {
+            #app-container { grid-template-columns: 1fr; }
+            #sidebar { position: fixed; border-right: 1px solid var(--border-color); transform: translateX(-100%); } 
+            #sidebar.open { transform: translateX(0); }
+            .menu-btn { display: flex !important; }
+            #sidebar-backdrop { display: none !important; }
         }
     </style>
 </head>
@@ -453,7 +457,11 @@ class HybridEditor {
             div.innerHTML = this.parse(text); 
             
             // Fix: Add stopPropagation to prevent wrapper click event from triggering
-            div.addEventListener('click', (e) => e.stopPropagation());
+            div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Ensure focus happens here, not at bottom
+                div.focus();
+            });
 
             div.addEventListener('focus', () => this.onFocus(i, div));
             div.addEventListener('blur', () => this.onBlur(i, div));
@@ -486,13 +494,11 @@ class HybridEditor {
         return h;
     }
     
-    // Switch to Raw Text on Focus
     onFocus(i, div) {
         div.classList.add('editing');
         div.innerText = this.lines[i]; 
     }
     
-    // Switch to Preview on Blur
     onBlur(i, div) {
         if(this.isMutating) return; // Guard
         if(div && div.isConnected) { 
@@ -631,14 +637,70 @@ class HybridEditor {
             }
         }
         else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            const prev = this.container.children[i-1];
-            if(prev) prev.focus();
+            if (i > 0) {
+                const currentLine = this.container.children[i];
+                const sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    let rect = range.getBoundingClientRect();
+                    if (rect.width === 0 && rect.height === 0) {
+                        const rects = range.getClientRects();
+                        if (rects.length > 0) rect = rects[0];
+                    }
+                    const elRect = currentLine.getBoundingClientRect();
+                    const isSingleLine = elRect.height < 40; 
+                    const isAtVisualTop = Math.abs(rect.top - elRect.top) < 15;
+
+                    if (isSingleLine || isAtVisualTop || currentLine.innerText.trim() === '') {
+                        e.preventDefault();
+                        const prev = this.container.children[i-1];
+                        if(prev) {
+                            prev.focus();
+                            // Move to END of previous line for natural feel
+                            // Or keep x pos? Keeping x pos is hard.
+                            // Standard behavior: focus() puts caret at start.
+                            // Let's put it at the end to avoid jumping to start.
+                            const range = document.createRange();
+                            range.selectNodeContents(prev);
+                            range.collapse(false);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                    }
+                }
+            }
         }
         else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            const next = this.container.children[i+1];
-            if(next) next.focus();
+            if (i < this.lines.length - 1) {
+                 const currentLine = this.container.children[i];
+                 const sel = window.getSelection();
+                 if (sel.rangeCount > 0) {
+                    const range = sel.getRangeAt(0);
+                    let rect = range.getBoundingClientRect();
+                    if (rect.width === 0 && rect.height === 0) {
+                        const rects = range.getClientRects();
+                        if (rects.length > 0) rect = rects[0];
+                    }
+                    const elRect = currentLine.getBoundingClientRect();
+                    const isSingleLine = elRect.height < 40; 
+                    // Check bottom distance. Buffer 10px.
+                    const isAtVisualBottom = Math.abs(rect.bottom - elRect.bottom) < 10;
+                    
+                    if (isSingleLine || isAtVisualBottom || currentLine.innerText.trim() === '') {
+                        e.preventDefault();
+                        const next = this.container.children[i+1];
+                        if(next) {
+                            next.focus();
+                            // Move to START of next line
+                            const range = document.createRange();
+                            range.selectNodeContents(next);
+                            range.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                    }
+                 }
+            }
         }
     }
 }
