@@ -57,7 +57,7 @@
             background: #ffffff; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.5s ease, visibility 0.5s;
-            overflow-y: auto;
+            overflow-y: auto; overscroll-behavior: contain;
         }
         #login-screen.fade-out { opacity: 0; visibility: hidden; pointer-events: none; }
 
@@ -183,7 +183,10 @@
         .editor-wrapper { max-width: 900px; margin: 0 auto; min-height: 100%; background: var(--card-bg); padding: 40px; box-shadow: 0 0 40px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
         .editor-title-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         input.title-input { flex-grow: 1; width: 100%; font-size: 2rem; font-weight: 800; border: none; outline: none; background: transparent; color: var(--text-main); padding: 0; line-height: 1.3; }
-        
+        .img-upload-btn { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: var(--input-bg); color: var(--text-sub); border: 1px solid var(--border-color); cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+        .img-upload-btn:hover { color: var(--accent-color); border-color: var(--accent-color); }
+        .title-thumbnail-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color); display: none; cursor: pointer; }
+        .title-thumbnail-preview.active { display: block; }
         #hybrid-editor { display: flex; flex-direction: column; gap: 0; font-size: 1.1rem; line-height: var(--line-height); color: var(--text-main); font-family: monospace; outline: none; padding-bottom: 150px; }
         .line { min-height: 1.8em; outline: none; white-space: pre-wrap; word-break: break-all; padding: 2px 6px; border-radius: 4px; position: relative; }
         .line:not(.editing) { cursor: text; }
@@ -225,6 +228,9 @@
         .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
         #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
+        .col-options { display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 6px; }
+        .col-option { flex: 1; text-align: center; padding: 8px 0; font-size: 0.9rem; cursor: pointer; border-radius: 4px; color: var(--text-sub); white-space: nowrap; }
+        .col-option.active { background: var(--card-bg); color: var(--accent-color); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
         
         @media (max-width: 768px) {
@@ -234,10 +240,7 @@
         }
         @media (min-width: 769px) {
             #app-container { grid-template-columns: 1fr; }
-            #sidebar { position: fixed; border-right: 1px solid var(--border-color); transform: translateX(-100%); } 
-            #sidebar.open { transform: translateX(0); }
-            .menu-btn { display: flex !important; }
-            #sidebar-backdrop { display: none !important; }
+            /* Sidebar hidden by default on PC too, use toggle */
         }
     </style>
 </head>
@@ -285,7 +288,7 @@
     <section id="list-column">
         <div class="column-header">
             <div class="header-title-area">
-                <div class="menu-btn" onclick="app.toggleSidebar()">
+                <div class="menu-btn" onclick="app.toggleSidebar(true)">
                     <svg width="24" height="24" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </div>
                 <div class="header-title" id="header-wiki-title">DokBox Teams</div>
@@ -596,22 +599,17 @@ class HybridEditor {
                  const prevLineEl = this.container.children[i-1];
                  if(prevLineEl) {
                      prevLineEl.focus();
-                     // We need to set caret to where lines merged (end of prev text)
-                     // Since element is currently raw text because of focus, it has one text node.
-                     // Simple set selection works.
-                     // Actually onFocus sets innerText = raw text. So structure is simple text node.
-                     // But wait, renderAll re-created elements, they are not focused yet.
-                     // We call focus(), which triggers onFocus, which sets raw text.
-                     // So we can just set range.
-                     const textNode = prevLineEl.firstChild || document.createTextNode("");
-                     if(!prevLineEl.firstChild) prevLineEl.appendChild(textNode);
-                     
-                     const r = document.createRange();
-                     const s = window.getSelection();
-                     r.setStart(textNode, movePos);
-                     r.collapse(true);
-                     s.removeAllRanges();
-                     s.addRange(r);
+                     // Use helper to set caret correctly
+                     if(prevLineEl.firstChild && prevLineEl.firstChild.nodeType === 3) {
+                         const r = document.createRange();
+                         const s = window.getSelection();
+                         r.setStart(prevLineEl.firstChild, movePos);
+                         r.collapse(true);
+                         s.removeAllRanges();
+                         s.addRange(r);
+                     } else {
+                         // Empty or complex? Fallback to end
+                     }
                  }
                  this.onChange(this.lines.join('\n'));
                  setTimeout(() => this.isMutating = false, 0);
@@ -657,9 +655,6 @@ class HybridEditor {
                         if(prev) {
                             prev.focus();
                             // Move to END of previous line for natural feel
-                            // Or keep x pos? Keeping x pos is hard.
-                            // Standard behavior: focus() puts caret at start.
-                            // Let's put it at the end to avoid jumping to start.
                             const range = document.createRange();
                             range.selectNodeContents(prev);
                             range.collapse(false);
