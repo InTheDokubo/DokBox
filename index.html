@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DokBox</title>
+    <title>DokBox Teams</title>
     
     <!-- Icons -->
     <link rel="icon" href="image.png" type="image/png">
@@ -42,6 +42,7 @@
             transition: opacity 0.3s; opacity: 0; pointer-events: none;
         }
         #loading-overlay.visible { opacity: 1; pointer-events: auto; }
+        
         .loader-cube { width: 40px; height: 40px; position: relative; transform-style: preserve-3d; animation: loaderSpin 2s infinite linear; }
         .lf { position: absolute; width: 40px; height: 40px; border: 2px solid #333; background: transparent; }
         .lf-f { transform: translateZ(20px); } .lf-b { transform: rotateY(180deg) translateZ(20px); }
@@ -95,7 +96,7 @@
         }
         #app-container.visible { opacity: 1; display: block; }
 
-        /* Sidebar (Drawer) */
+        /* Sidebar (Drawer for ALL devices) */
         #sidebar {
             position: fixed; top: 0; left: 0; height: 100%; width: var(--sidebar-width);
             background: var(--sb-bg); display: flex; flex-direction: column; align-items: center; 
@@ -105,6 +106,8 @@
             box-shadow: 4px 0 15px rgba(0,0,0,0.15); overscroll-behavior: contain;
         }
         #sidebar.open { transform: translateX(0); }
+        
+        /* Sidebar Backdrop */
         #sidebar-backdrop {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5); z-index: 2900; opacity: 0; transition: opacity 0.3s;
@@ -128,8 +131,10 @@
             background: var(--bg-color);
             transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s;
         }
+        
         body[data-view="list"] #list-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
         body[data-view="list"] #detail-column { transform: translateX(30%); opacity: 0; z-index: 0; pointer-events: none; }
+        
         body[data-view="detail"] #list-column { transform: translateX(-30%); opacity: 0; z-index: 0; pointer-events: none; }
         body[data-view="detail"] #detail-column { transform: translateX(0); opacity: 1; z-index: 10; pointer-events: auto; }
 
@@ -142,25 +147,36 @@
         .menu-btn { display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-main); padding: 5px; border-radius: 50%; flex-shrink: 0; }
         .menu-btn:hover { background: var(--input-bg); }
         
-        /* List View */
+        /* List View Items */
         .search-area { padding: 15px 20px; background: var(--bg-color); flex-shrink: 0; width: 100%; display: flex; justify-content: center; }
         .search-input { width: 100%; max-width: 800px; padding: 10px 15px 10px 35px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 1rem; outline: none; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
         .search-input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2); }
         .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 16px; color: var(--text-sub); pointer-events: none; }
         
-        #list-scroll { flex-grow: 1; overflow-y: auto; padding: 20px 20px 40px 20px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; width: 100%; display: flex; flex-direction: column; align-items: center; }
+        #list-scroll { 
+            flex-grow: 1; overflow-y: auto; padding: 20px 20px 40px 20px; 
+            -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+            width: 100%; display: flex; flex-direction: column; align-items: center; 
+        }
         .card-grid { display: grid; gap: 10px; grid-template-columns: repeat(6, 1fr); width: 100%; max-width: 1200px; }
-        
-        /* Card */
-        .card { background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; aspect-ratio: 1 / 1; display: flex; flex-direction: column; overflow: hidden; transition: all 0.2s; border: 2px solid transparent; position: relative; }
+        .card { 
+            background: var(--card-bg); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+            cursor: pointer; aspect-ratio: 1 / 1; 
+            display: flex; flex-direction: column; overflow: hidden; 
+            transition: all 0.2s; border: 2px solid transparent; position: relative; 
+        }
         .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-color: var(--accent-color); }
         .card.active { border-color: var(--accent-color); background: var(--input-bg); }
+        
         .card-thumb { height: 60%; width: 100%; background-size: cover; background-position: center; background-color: var(--input-bg); flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
         .card-content { padding: 5px 6px; display: flex; flex-direction: column; flex-grow: 1; overflow: hidden; text-align: center; justify-content: center; }
-        .card-title { font-weight: bold; font-size: 0.7rem; margin-bottom: 0; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .card-title { 
+            font-weight: bold; font-size: 0.7rem; margin-bottom: 0; line-height: 1.3;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; 
+        }
         .card-meta { font-size: 0.6rem; color: var(--text-sub); opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         
-        /* Detail */
+        /* Detail View Items */
         .back-btn { display: flex; align-items: center; gap: 5px; color: var(--accent-color); font-weight: bold; cursor: pointer; padding: 5px 10px; border-radius: 6px; transition: background 0.2s; }
         .back-btn:hover { background: var(--input-bg); }
         .editor-scroll { flex-grow: 1; overflow-y: auto; padding: 0; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; cursor: text; }
@@ -209,19 +225,15 @@
         .btn-cancel { padding: 12px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; width: 100%; }
         input[type="color"] { width: 100%; height: 40px; border: none; padding: 0; background: none; cursor: pointer; }
         #accent-color-picker { width: 100%; height: 40px; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden; }
+        .col-options { display: flex; gap: 5px; background: var(--input-bg); padding: 4px; border-radius: 6px; }
+        .col-option { flex: 1; text-align: center; padding: 8px 0; font-size: 0.9rem; cursor: pointer; border-radius: 4px; color: var(--text-sub); white-space: nowrap; }
+        .col-option.active { background: var(--card-bg); color: var(--accent-color); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .danger-zone { border-top: 1px solid var(--border-color); padding-top: 15px; margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
         
         @media (max-width: 768px) {
             .card-grid { grid-template-columns: repeat(2, 1fr); }
             .editor-wrapper { padding: 20px; }
             input.title-input { font-size: 1.8rem; margin-bottom: 20px; }
-        }
-        @media (min-width: 769px) {
-            #app-container { grid-template-columns: var(--sidebar-width) 1fr; }
-            #sidebar { position: fixed; border-right: 1px solid var(--border-color); transform: translateX(-100%); } 
-            #sidebar.open { transform: translateX(0); }
-            .menu-btn { display: flex !important; }
-            #sidebar-backdrop { display: none !important; }
         }
     </style>
 </head>
@@ -316,7 +328,8 @@
             <div class="detail-actions"><span id="save-status" style="font-size:0.75rem;color:var(--text-sub);"></span><button class="btn-icon danger" onclick="app.confirmDeletePage()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button></div>
         </div>
         <div class="editor-scroll">
-            <div class="editor-wrapper" onclick="document.getElementById('hybrid-editor').lastElementChild.focus()">
+            <!-- Click wrapper -> focus last line ONLY if clicking blank space -->
+            <div class="editor-wrapper" onclick="if(event.target===event.currentTarget && document.getElementById('hybrid-editor').lastElementChild) document.getElementById('hybrid-editor').lastElementChild.focus()">
                 <div class="editor-title-row">
                     <input type="text" id="page-title" class="title-input" placeholder="タイトルなし">
                 </div>
@@ -426,6 +439,7 @@ class Auth {
 class HybridEditor {
     constructor(container, onChange) {
         this.container = container; this.onChange = onChange; this.lines = [""];
+        this.isMutating = false; // Add guard flag
     }
     setContent(text) {
         this.lines = text.split('\n'); if(this.lines.length===0) this.lines=[""];
@@ -436,10 +450,11 @@ class HybridEditor {
         this.lines.forEach((text, i) => {
             const div = document.createElement('div'); div.className='line'; div.contentEditable=true;
             div.dataset.index = i;
-            // Initially render as parsed HTML (Preview Mode)
             div.innerHTML = this.parse(text); 
             
-            // Events for Cosense-like behavior
+            // Fix: Add stopPropagation to prevent wrapper click event from triggering
+            div.addEventListener('click', (e) => e.stopPropagation());
+
             div.addEventListener('focus', () => this.onFocus(i, div));
             div.addEventListener('blur', () => this.onBlur(i, div));
             div.addEventListener('input', () => this.onInput(i, div));
@@ -448,7 +463,6 @@ class HybridEditor {
             this.container.appendChild(div);
         });
     }
-    // Parse formatting (Markdown, Links, Images)
     parse(t) {
         if(!t) return '<br>';
         let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -475,25 +489,57 @@ class HybridEditor {
     // Switch to Raw Text on Focus
     onFocus(i, div) {
         div.classList.add('editing');
-        div.innerText = this.lines[i]; // Show raw text
+        div.innerText = this.lines[i]; 
     }
     
     // Switch to Preview on Blur
     onBlur(i, div) {
-        if(div && div.isConnected) { // Check if element still exists
+        if(this.isMutating) return; // Guard
+        if(div && div.isConnected) { 
             div.classList.remove('editing');
-            // Save current raw text
             this.lines[i] = div.innerText.replace(/\n/g, ''); 
-            // Render preview
             div.innerHTML = this.parse(this.lines[i]);
             this.onChange(this.lines.join('\n'));
         }
     }
     
     onInput(i, div) {
-        // Update model immediately during editing
         this.lines[i] = div.innerText.replace(/\n/g, '');
         window.app.triggerSave();
+    }
+    
+    // Set caret helper
+    setCaret(el, offset) {
+        const range = document.createRange();
+        const sel = window.getSelection();
+        let currentOffset = 0;
+        let found = false;
+
+        function traverse(node) {
+            if (found) return;
+            if (node.nodeType === 3) { // Text node
+                const len = node.nodeValue.length;
+                if (currentOffset + len >= offset) {
+                    range.setStart(node, offset - currentOffset);
+                    range.collapse(true);
+                    found = true;
+                } else {
+                    currentOffset += len;
+                }
+            } else {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    traverse(node.childNodes[i]);
+                }
+            }
+        }
+        traverse(el);
+        
+        if (!found) {
+             range.selectNodeContents(el);
+             range.collapse(false);
+        }
+        sel.removeAllRanges();
+        sel.addRange(range);
     }
     
     onKey(e, i) {
@@ -501,26 +547,78 @@ class HybridEditor {
 
         if(e.key === 'Enter') {
             e.preventDefault();
-            // Split line at cursor? For simplicity, just insert new line below
-            // A full implementation would split the string at cursor pos.
-            this.lines.splice(i+1, 0, "");
+            this.isMutating = true;
+            
+            // Split Line Logic
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            const caretPos = range.startOffset;
+
+            const currentLineText = this.lines[i];
+            const firstPart = currentLineText.substring(0, caretPos);
+            const secondPart = currentLineText.substring(caretPos);
+
+            this.lines[i] = firstPart;
+            this.lines.splice(i+1, 0, secondPart);
+            
             this.renderAll();
-            // Focus next line
+            
             const nextLine = this.container.children[i+1];
             if(nextLine) {
                 nextLine.focus();
             }
             this.onChange(this.lines.join('\n'));
+            setTimeout(() => this.isMutating = false, 0);
         } else if(e.key === 'Backspace') {
-            // If empty line, delete and move up
-            if(this.lines[i] === '' && this.lines.length > 1) {
+            const selection = window.getSelection();
+            const range = selection.getRangeAt(0);
+            // Check if caret is at start (collapsed and offset 0)
+            if (range.collapsed && range.startOffset === 0 && i > 0) {
+                 e.preventDefault();
+                 this.isMutating = true;
+                 
+                 const currentLineText = this.lines[i];
+                 const prevLineText = this.lines[i-1];
+                 const movePos = prevLineText.length; // New cursor pos
+                 
+                 // Merge
+                 this.lines[i-1] = prevLineText + currentLineText;
+                 this.lines.splice(i, 1);
+                 
+                 this.renderAll();
+                 
+                 const prevLineEl = this.container.children[i-1];
+                 if(prevLineEl) {
+                     prevLineEl.focus();
+                     // We need to set caret to where lines merged (end of prev text)
+                     // Since element is currently raw text because of focus, it has one text node.
+                     // Simple set selection works.
+                     // Actually onFocus sets innerText = raw text. So structure is simple text node.
+                     // But wait, renderAll re-created elements, they are not focused yet.
+                     // We call focus(), which triggers onFocus, which sets raw text.
+                     // So we can just set range.
+                     const textNode = prevLineEl.firstChild || document.createTextNode("");
+                     if(!prevLineEl.firstChild) prevLineEl.appendChild(textNode);
+                     
+                     const r = document.createRange();
+                     const s = window.getSelection();
+                     r.setStart(textNode, movePos);
+                     r.collapse(true);
+                     s.removeAllRanges();
+                     s.addRange(r);
+                 }
+                 this.onChange(this.lines.join('\n'));
+                 setTimeout(() => this.isMutating = false, 0);
+            }
+            // Original empty line delete logic (redundant if above covers it, but kept for safety if empty string)
+            else if(this.lines[i] === '' && this.lines.length > 1) {
                 e.preventDefault();
+                this.isMutating = true;
                 this.lines.splice(i, 1);
                 this.renderAll();
                 const prevLine = this.container.children[i-1];
                 if(prevLine) {
                     prevLine.focus();
-                    // Move cursor to end
                     const range = document.createRange();
                     const sel = window.getSelection();
                     range.selectNodeContents(prevLine);
@@ -529,55 +627,18 @@ class HybridEditor {
                     sel.addRange(range);
                 }
                 this.onChange(this.lines.join('\n'));
+                setTimeout(() => this.isMutating = false, 0);
             }
         }
-        // Seamless Navigation (Up/Down/Left/Right across lines)
         else if (e.key === 'ArrowUp') {
-            // If at first line or normal navigation, let default happen if same line.
-            // But since lines are block divs, native arrow keys won't jump between them easily in contentEditable=true unless wrapper is editable.
-            // Here we force jump if we are at top.
             e.preventDefault();
             const prev = this.container.children[i-1];
-            if(prev) {
-                prev.focus();
-                // move caret to end for smoothness? or keep pos? keep pos is hard.
-                // for simplicity, move to end or start based on user expectation?
-                // actually just focus moves caret to start usually.
-            }
+            if(prev) prev.focus();
         }
         else if (e.key === 'ArrowDown') {
             e.preventDefault();
             const next = this.container.children[i+1];
             if(next) next.focus();
-        }
-        else if (e.key === 'ArrowLeft') {
-            const sel = window.getSelection();
-            if(sel.anchorOffset === 0 && i > 0) {
-                e.preventDefault();
-                const prev = this.container.children[i-1];
-                prev.focus();
-                // Move to end of prev line
-                const range = document.createRange();
-                range.selectNodeContents(prev);
-                range.collapse(false);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-        }
-        else if (e.key === 'ArrowRight') {
-            const sel = window.getSelection();
-            const len = this.lines[i].length;
-            if(sel.anchorOffset === len && i < this.lines.length - 1) {
-                e.preventDefault();
-                const next = this.container.children[i+1];
-                next.focus();
-                // Move to start
-                const range = document.createRange();
-                range.selectNodeContents(next);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
         }
     }
 }
@@ -703,9 +764,12 @@ class App {
         list.forEach(p=>{
             const el=document.createElement('div'); el.className='card';
             let bgUrl = '';
-            const m = p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]]+)\]/i);
+            // Only extract image URL (no manual upload)
+            const m = p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]\*]+)(?:\*([\d\.]+))?\]/i);
             if(m) {
                 let u = m[1];
+                // Remove size config from thumbnail url check
+                if(u.includes('*')) u = u.split('*')[0];
                 if(u.match(/gyazo/)) u = u.replace('gyazo.com','i.gyazo.com')+'.png';
                 bgUrl = u;
             }
@@ -734,8 +798,8 @@ class App {
             document.getElementById('related-section').classList.remove('hidden');
             rel.forEach(p=>{
                 const el=document.createElement('div'); el.className='card';
-                let bgUrl = ''; const m = p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]]+)\]/i); if(m) { let u=m[1]; if(u.match(/gyazo/)) u=u.replace('gyazo.com','i.gyazo.com')+'.png'; bgUrl=u; }
-                let thHtml = bgUrl ? `<div class="card-thumb" style="background-image:url('${bgUrl}');height:60px;"></div>` : ''; 
+                let bgUrl = ''; const m = p.lines.join('\n').match(/\[(https?:\/\/.*?\.(?:png|jpg|jpeg|gif|webp)|https?:\/\/gyazo\.com\/[^\]\*]+)(?:\*([\d\.]+))?\]/i); if(m) { let u=m[1]; if(u.match(/gyazo/)) u=u.replace('gyazo.com','i.gyazo.com')+'.png'; bgUrl=u; }
+                let thHtml = `<div class="card-thumb" style="background-image:url('${bgUrl}');height:60%;"></div>`; 
                 el.innerHTML=`${thHtml}<div class="card-content"><div class="card-title">${this.esc(p.title)}</div></div>`;
                 el.onclick=()=>this.openPage(p.id);
                 grid.appendChild(el);
